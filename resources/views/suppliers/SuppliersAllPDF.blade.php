@@ -45,7 +45,7 @@
         <td>ID</td>
         <td>Name</td>
         <td>Address</td>
-        <td>Email</td>
+        <!-- <td>Email</td> -->
     </tr>
     </thead>
     @foreach($suppliers as $s)
@@ -54,7 +54,7 @@
             <td>{{ $s->id }}</td>
             <td>{{ $s->name }}</td>
             <td>{{ $s->address }}</td>
-            <td>{{ $s->email }}</td>
+            <!-- <td>{{ $s->email }}</td> -->
         </tr>
         </tbody>
     @endforeach

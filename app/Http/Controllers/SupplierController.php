@@ -50,8 +50,8 @@ class SupplierController extends Controller
         $this->validate($request, [
             'name'      => 'required',
             'address'    => 'required',
-            'email'     => 'required|unique:suppliers',
-            'phone'   => 'required',
+            // 'email'     => 'required|unique:suppliers',
+            // 'phone'   => 'required',
         ]);
 
         Supplier::create($request->all());
@@ -100,8 +100,8 @@ class SupplierController extends Controller
         $this->validate($request, [
             'name'      => 'required|string|min:2',
             'address'    => 'required|string|min:2',
-            'email'     => 'required|string|email|max:255|unique:suppliers,email,'.$supplier->id,
-            'phone'   => 'required|string|min:2',
+            // 'email'     => 'required|string|email|max:255|unique:suppliers,email,'.$supplier->id,
+            // 'phone'   => 'required|string|min:2',
         ]);
 
         $supplier->update($request->all());
