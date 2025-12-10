@@ -42,8 +42,8 @@
                     <th>ID</th>
                     <th>Name</th>
                     <th>Address</th>
-                    <th>Email</th>
-                    <th>Phone</th>
+                    <!-- <th>Email</th>
+                    <th>Phone</th> -->
                     <th></th>
                 </tr>
                 </thead>
@@ -77,8 +77,8 @@
                 {data: 'id', name: 'id'},
                 {data: 'name', name: 'name'},
                 {data: 'address', name: 'address'},
-                {data: 'email', name: 'email'},
-                {data: 'phone', name: 'phone'},
+                // {data: 'email', name: 'email'},
+                // {data: 'phone', name: 'phone'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ]
         });
@@ -106,8 +106,8 @@
                     $('#id').val(data.id);
                     $('#name').val(data.name);
                     $('#address').val(data.address);
-                    $('#email').val(data.email);
-                    $('#phone').val(data.phone);
+                    // $('#email').val(data.email);
+                    // $('#phone').val(data.phone);
                 },
                 error : function() {
                     alert("Nothing Data");
