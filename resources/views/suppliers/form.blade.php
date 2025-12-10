@@ -28,7 +28,7 @@
                             <span class="help-block with-errors"></span>
                         </div>
 
-                        <div class="form-group">
+                        <!-- <div class="form-group">
                             <label>Email</label>
                             <input type="email" class="form-control" id="email" name="email"   required>
                             <span class="help-block with-errors"></span>
@@ -38,7 +38,7 @@
                             <label>Phone</label>
                             <input type="text" class="form-control" id="phone" name="phone"   required>
                             <span class="help-block with-errors"></span>
-                        </div>
+                        </div> -->
 
 
                     </div>
