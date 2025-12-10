@@ -53,8 +53,8 @@
         <tr>
             <td>{{ $s->id }}</td>
             <td>{{ $s->name }}</td>
-            <!-- <td>{{ $s->address }}</td>
-            <td>{{ $s->email }}</td> -->
+            <td>{{ $s->address }}</td>
+            <!-- <td>{{ $s->email }}</td>  -->
         </tr>
         </tbody>
     @endforeach
