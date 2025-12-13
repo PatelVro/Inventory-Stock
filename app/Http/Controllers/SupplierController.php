@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Excel;
 use PDF;
+use App\Barcode;
 
 
 class SupplierController extends Controller
@@ -46,22 +47,37 @@ class SupplierController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
-        $this->validate($request, [
-            'name'      => 'required',
-            'address'    => 'required',
-            // 'email'     => 'required|unique:suppliers',
-            // 'phone'   => 'required',
-        ]);
+{
+   $this->validate($request, [
+        'name'      => 'required',
+        'address'   => 'required',
+        'barcode'       => 'required',
+    ]);
 
-        Supplier::create($request->all());
+    $input = $request->all();
+
+        $barcode = new Barcode;
+        $barcode->name = $input['barcode'];
+        $barcode->save();
+        
+
+        $input['image'] = null;
+
+        if ($request->hasFile('image')){
+            $input['image'] = '/upload/location/'.str_slug($input['name'], '-').'.'.$request->image->getClientOriginalExtension();
+            $request->image->move(public_path('/upload/location/'), $input['image']);
+        }
+
+        $input['barcode_id'] = $barcode->id;
+        Supplier::create($input);
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Location Created'
+            'success' => true,
+            'message' => 'Location Created'
         ]);
 
-    }
+    
+}
 
     /**
      * Display the specified resource.
@@ -83,6 +99,7 @@ class SupplierController extends Controller
     public function edit($id)
     {
         $supplier = Supplier::find($id);
+        $supplier['barcode'] = $suppliers->barcode->name;
         return $supplier;
     }
 
@@ -98,19 +115,37 @@ class SupplierController extends Controller
         $supplier = Supplier::findOrFail($id);
 
         $this->validate($request, [
-            'name'      => 'required|string|min:2',
-            'address'    => 'required|string|min:2',
-            // 'email'     => 'required|string|email|max:255|unique:suppliers,email,'.$supplier->id,
-            // 'phone'   => 'required|string|min:2',
+            'name' => 'required|string|min:2',
+            'address' => 'required|string|min:2',
+            'barcode'       => 'required',
         ]);
 
-        $supplier->update($request->all());
+        $input = $request->all();
+        $produk = Supplier::findOrFail($id);
+
+        $input['image'] = $produk->image;
+
+        if ($request->hasFile('image')){
+            if (!$produk->image == NULL){
+                unlink(public_path($produk->image));
+            }
+            $input['image'] = '/upload/location/'.str_slug($input['name'], '-').'.'.$request->image->getClientOriginalExtension();
+            $request->image->move(public_path('/upload/location/'), $input['image']);
+        }
+
+        $barcode = Barcode::findOrFail($produk->barcode_id);
+        $barcode->name = $input['barcode'];
+        $barcode->save();
+
+        $produk->update($input);
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Supplier Updated'
+            'success' => true,
+            'message' => 'Supplier Updated'
         ]);
     }
+
+
 
     /**
      * Remove the specified resource from storage.
@@ -120,6 +155,14 @@ class SupplierController extends Controller
      */
     public function destroy($id)
     {
+        
+        $suppliers = Supplier::findOrFail($id);
+
+        if (!$suppliers->image == NULL){
+            unlink(public_path($suppliers->image));
+        }
+
+
         Supplier::destroy($id);
 
         return response()->json([
@@ -137,7 +180,23 @@ class SupplierController extends Controller
                 return '<a onclick="editForm('. $suppliers->id .')" class="btn btn-primary btn-xs"><i class="glyphicon glyphicon-edit"></i> Edit</a> ' .
                     '<a onclick="deleteData('. $suppliers->id .')" class="btn btn-danger btn-xs"><i class="glyphicon glyphicon-trash"></i> Delete</a>';
             })
-            ->rawColumns(['action'])->make(true);
+            ->addColumn('barcode_name', function ($suppliers){
+                return $suppliers->barcode->name;
+            })
+            ->addColumn('barcode_image', function ($suppliers){
+                return '<a href="https://barcode.tec-it.com/barcode.ashx?data='.$suppliers->barcode->name.'&code=EAN13&dpi=96&imagetype=Png&download=true" style="margin: 0 auto;display: block;text-align:center;" title="Download Barcode" target="_blank" download><img class="img-responsive img-thumbnail" src="https://barcode.tec-it.com/barcode.ashx?data='.$suppliers->barcode->name.'&code=EAN13&dpi=96"><br>Download</a>';
+            })
+            ->addColumn('show_photo', function($suppliers){
+                if ($suppliers->image == NULL){
+                    return 'No Image';
+                }
+                return '<img class="rounded-square" width="100" src="'. url($suppliers->image) .'" alt="">';
+            })
+            ->addColumn('action', function($suppliers){
+                return '<a onclick="editForm('. $suppliers->id .')" class="btn btn-primary btn-xs"><i class="glyphicon glyphicon-edit"></i> Edit</a> ' .
+                    '<a onclick="deleteData('. $suppliers->id .')" class="btn btn-danger btn-xs"><i class="glyphicon glyphicon-trash"></i> Delete</a>';
+            })
+            ->rawColumns(['barcode','barcode_image','category_name','show_photo','action'])->make(true);
     }
 
     public function ImportExcel(Request $request)
@@ -170,4 +229,5 @@ class SupplierController extends Controller
     {
         return (new ExportSuppliers)->download('suppliers.xlsx');
     }
+    
 }

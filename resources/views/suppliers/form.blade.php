@@ -28,6 +28,12 @@
                             <span class="help-block with-errors"></span>
                         </div>
 
+                        <div class="form-group">
+                            <label>Barcode</label>
+                            <input type="text" class="form-control" id="barcode" name="barcode" required>
+                            <span class="help-block with-errors"></span>
+                        </div>
+
                         <!-- <div class="form-group">
                             <label>Email</label>
                             <input type="email" class="form-control" id="email" name="email"   required>
