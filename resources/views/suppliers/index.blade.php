@@ -42,8 +42,8 @@
                     <th>ID</th>
                     <th>Name</th>
                     <th>Address</th>
-                    <!-- <th>Email</th>
-                    <th>Phone</th> -->
+                    <th>Barcode</th>
+                    <th>Barcode Image</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -77,8 +77,8 @@
                 {data: 'id', name: 'id'},
                 {data: 'name', name: 'name'},
                 {data: 'address', name: 'address'},
-                // {data: 'email', name: 'email'},
-                // {data: 'phone', name: 'phone'},
+                {data: 'barcode_name', name: 'barcode_name'},
+                {data: 'barcode_image', name: 'barcode_image'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ]
         });
@@ -106,8 +106,7 @@
                     $('#id').val(data.id);
                     $('#name').val(data.name);
                     $('#address').val(data.address);
-                    // $('#email').val(data.email);
-                    // $('#phone').val(data.phone);
+                    $('#barcode').val(data.barcode.name);
                 },
                 error : function() {
                     alert("Nothing Data");
