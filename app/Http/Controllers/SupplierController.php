@@ -99,7 +99,7 @@ class SupplierController extends Controller
     public function edit($id)
     {
         $supplier = Supplier::find($id);
-        $supplier['barcode'] = $suppliers->barcode->name;
+        //$supplier['barcode'] = $suppliers->barcode->name;
         return $supplier;
     }
 
