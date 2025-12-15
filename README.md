@@ -37,8 +37,6 @@ The original project serves as the foundation, and this version builds upon it w
 
 See in more detail the amount of your product stock, and see every purchase or sale. You don't need a barcode scanner to increase or decrease the number of your products, because with the Android Application, you can scan barcodes quickly and efficiently.
 
-![Preview](https://user-images.githubusercontent.com/11581453/67825650-fa57a680-fb04-11e9-906c-effb164f6f17.png)
-
 ---
 
 ## ✨ Features
@@ -106,8 +104,6 @@ Google Play Link:
    * Backend system URL
    * API KEY (available in **Company Details** after logging into the system)
    * Or scan the QR code for automatic setup
-
-![Android Setup](https://user-images.githubusercontent.com/11581453/65929820-0aad3080-e436-11e9-8e3e-58b7bb9d87a5.png)
 
 5. Installation complete
 
