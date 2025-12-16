@@ -12,10 +12,16 @@
 @endsection
 
 @section('breadcrumb')
-<ol class="breadcrumb">
+<ol class="breadcrumb a">
     <li><a href="{{url('/')}}"><i class="fa fa-dashboard"></i> Dashboard</a></li>
 </ol>
+<a href="{{ route('inventory.index') }}" class="btn btn-secondary mb-3">
+    Inventory
+</a>
+
 @endsection
+
+
 
 @section('content')
 <!-- Small boxes (Stat box) -->
