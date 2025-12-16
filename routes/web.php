@@ -10,6 +10,7 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
+use App\Http\Controllers\InventoryController;
 
 Route::get('/', function () {
     // return view('auth.login');
@@ -69,6 +70,17 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/apiUsers','UserController@apiUsers')->name('api.users');
 
     Route::resource('company','CompanyController');
+
+   
+
+    Route::prefix('inventory')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/product-in', [InventoryController::class, 'productIn'])->name('inventory.product.in');
+        Route::get('/product-out', [InventoryController::class, 'productOut'])->name('inventory.product.out');
+        Route::get('/add-product', [InventoryController::class, 'addProduct'])->name('inventory.add.product');
+        Route::get('/settings', [InventoryController::class, 'settings'])->name('inventory.settings');
+    });
+
 });
 
 Route::get('/pdf-test', function () {

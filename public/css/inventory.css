@@ -1,0 +1,75 @@
+.inventory-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.inventory-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 140px;
+    text-decoration: none;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    color: #333;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.inventory-btn i {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.inventory-btn:hover {
+    background-color: #0d6efd;
+    color: #ffffff;
+    transform: translateY(-5px);
+}
+
+
+.bt {
+    background: white;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 10px;
+    box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.1);
+}
+
+
+.bt a {
+    display: block;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 30px 0;
+}
+
+
+.bt a i {
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border: 1px solid #eee;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    font-size: 18px;
+}
+
+
+.bt.bt2 a {
+    color: #d56464;
+}
+
+.bt.bt3 a {
+    color: #218f21;
+}
+
+.bt.bt4 a {
+    color: #ef9b17;
+}
