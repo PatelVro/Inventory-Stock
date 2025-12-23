@@ -71,13 +71,18 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('company','CompanyController');
 
-   
+    Route::get('/stock', 'StockController@index')->name('stock.index');
+    Route::post('/stock', 'StockController@store')->name('stock.store');
+    Route::put('/stock/{id}', 'StockController@update')->name('stock.update');
+    Route::delete('/stock/{id}', 'StockController@destroy')->name('stock.destroy');
+
 
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/product-in', [InventoryController::class, 'productIn'])->name('inventory.product.in');
         Route::get('/product-out', [InventoryController::class, 'productOut'])->name('inventory.product.out');
-        Route::get('/add-product', [InventoryController::class, 'addProduct'])->name('inventory.add.product');
+        Route::get('/inventory/add-product', [InventoryController::class, 'addProduct'])->name('inventory.add.product');
+        Route::post('/inventory/add-product', [InventoryController::class, 'storeProduct'])->name('inventory.store.product');
         Route::get('/settings', [InventoryController::class, 'settings'])->name('inventory.settings');
     });
 

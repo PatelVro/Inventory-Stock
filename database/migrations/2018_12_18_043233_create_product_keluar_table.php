@@ -16,13 +16,13 @@ class CreateProductKeluarTable extends Migration
         Schema::create('product_out', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('product_id')->unsigned();
-            $table->integer('customer_id')->unsigned();
+            $table->integer('supplier_id')->unsigned();
             $table->integer('qty');
             $table->date('date');
             $table->timestamps();
 
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+            $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('cascade');
         });
     }
 

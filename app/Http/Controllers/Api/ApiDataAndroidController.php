@@ -13,8 +13,14 @@ use App\Company;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
+
 class ApiDataAndroidController extends Controller
 {
+
+
+
+		
+
 	// All suppliers
 	public function apiGetAllSuppliers()
     {
@@ -25,6 +31,18 @@ class ApiDataAndroidController extends Controller
             'name' => $suppliers
         ]);
     }
+
+	// All suppliers
+	public function apiGetAllSupplier()
+    {
+        $supplier = Supplier::all();
+
+        return response()->json([
+            'success' => 1,
+            'name' => $supplier
+        ]);
+    }
+
 
     // All customer
     public function apiGetAllCustomer()
@@ -110,7 +128,7 @@ class ApiDataAndroidController extends Controller
     		// Create the product-in
     		$saveIt = new Product_Out;
     		$saveIt->product_id = $product->id;
-    		$saveIt->customer_id = $request->customer_id;
+    		$saveIt->supplier_id = $request->supplier_id;
     		$saveIt->qty = $request->qty;
     		$saveIt->date = $request->date;
     		$saveIt->save();

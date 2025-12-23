@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Category;
 use App\Customer;
+use App\Supplier;
+use App\Stock;
 use App\Exports\ExportProductOut;
 use App\Product;
 use App\Product_Out;
@@ -15,6 +17,8 @@ use PDF;
 
 class ProductOutController extends Controller
 {
+
+    
     public function __construct()
     {
         $this->middleware('role:admin,staff');
@@ -30,12 +34,12 @@ class ProductOutController extends Controller
             ->get()
             ->pluck('name','id');
 
-        $customers = Customer::orderBy('name','ASC')
+        $supplier = Supplier::orderBy('name','ASC')
             ->get()
             ->pluck('name','id');
 
         $invoice_data = Product_Out::all();
-        return view('product_out.index', compact('products','customers', 'invoice_data'));
+        return view('product_out.index', compact('products','supplier', 'invoice_data'));
     }
 
     /**
@@ -56,25 +60,51 @@ class ProductOutController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request, [
-           'product_id'     => 'required',
-           'customer_id'    => 'required',
-           'qty'            => 'required',
-           'date'           => 'required'
+        $request->validate([
+            'product_id'  => 'required|integer',
+            'supplier_id' => 'required|integer',
+            'qty'         => 'required|integer|min:1',
+            'date'        => 'required'
         ]);
 
-        Product_Out::create($request->all());
+        // Find stock by product + supplier
+        $stock = Stock::where('product_id', $request->product_id)
+                    ->where('supplier_id', $request->supplier_id)
+                    ->first();
 
-        $product = Product::findOrFail($request->product_id);
-        $product->qty -= $request->qty;
+        if (!$stock) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stock not found for this product and location'
+            ], 422);
+        }
+
+        if ($stock->qty < $request->qty) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not enough stock available'
+            ], 422);
+        }
+
+        // Save product out
+        $productOut = Product_Out::create($request->all());
+
+        // Reduce stock qty
+        $stock->qty = $stock->qty - $request->qty;
+        $stock->save();
+
+        // Reduce product total qty
+        $product = Product::find($request->product_id);
+        $product->qty = $product->qty - $request->qty;
         $product->save();
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Products Out Created'
+            'success' => true,
+            'message' => 'Product Out saved and stock updated'
         ]);
-
     }
+
+
 
     /**
      * Display the specified resource.
@@ -109,24 +139,46 @@ class ProductOutController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'product_id'     => 'required',
-            'customer_id'    => 'required',
-            'qty'            => 'required',
-            'date'           => 'required'
+            'product_id'  => 'required',
+            'supplier_id' => 'required',
+            'qty'         => 'required|numeric|min:1',
+            'date'        => 'required'
         ]);
 
-        $Product_Out = Product_Out::findOrFail($id);
-        $Product_Out->update($request->all());
+        $productOut = Product_Out::findOrFail($id);
 
+        // Calculate difference
+        $qtyDifference = $request->qty - $productOut->qty;
+
+        $stock = Stock::where('product_id', $request->product_id)
+                    ->where('supplier_id', $request->supplier_id)
+                    ->first();
+
+        if (!$stock || ($stock->qty < $qtyDifference && $qtyDifference > 0)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient stock'
+            ], 422);
+        }
+
+        // Update product_out
+        $productOut->update($request->all());
+
+        // Update product qty
         $product = Product::findOrFail($request->product_id);
-        $product->qty -= $request->qty;
-        $product->update();
+        $product->qty -= $qtyDifference;
+        $product->save();
+
+        // Update stock qty
+        $stock->qty -= $qtyDifference;
+        $stock->save();
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Product Out Updated'
+            'success' => true,
+            'message' => 'Product Out Updated'
         ]);
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -136,36 +188,58 @@ class ProductOutController extends Controller
      */
     public function destroy($id)
     {
-        Product_Out::destroy($id);
+        $productOut = Product_Out::findOrFail($id);
+
+        // Restore stock qty
+        $stock = Stock::where('product_id', $productOut->product_id)
+                    ->where('supplier_id', $productOut->supplier_id)
+                    ->first();
+
+        if ($stock) {
+            $stock->qty += $productOut->qty;
+            $stock->save();
+        }
+
+        // Restore product qty
+        $product = Product::findOrFail($productOut->product_id);
+        $product->qty += $productOut->qty;
+        $product->save();
+
+        $productOut->delete();
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Products Delete Deleted'
+            'success' => true,
+            'message' => 'Products Out Deleted'
         ]);
     }
 
 
 
-    public function apiProductsOut(){
-        $product = Product_Out::all();
 
-        return Datatables::of($product)
-            ->addColumn('products_name', function ($product){
-                return $product->product->name;
-            })
-            ->addColumn('customer_name', function ($product){
-                return $product->customer->name;
-            })
-            ->addColumn('multiple_export', function ($product){
-                return '<input type="checkbox" name="exportpdf[]" class="checkbox" value="'. $product->id .'">';
-            })
-            ->addColumn('action', function($product){
-                return '<a onclick="editForm('. $product->id .')" class="btn btn-primary btn-xs"><i class="glyphicon glyphicon-edit"></i> Edit</a> ' .
-                    '<a onclick="deleteData('. $product->id .')" class="btn btn-danger btn-xs"><i class="glyphicon glyphicon-trash"></i> Delete</a>';
-            })
-            ->rawColumns(['multiple_export','products_name','customer_name','action'])->make(true);
+    public function apiProductsOut()
+{
+    $productsOut = Product_Out::with(['product', 'supplier'])->get();
 
-    }
+    return DataTables::of($productsOut)
+        ->addColumn('products_name', function ($row) {
+            return optional($row->product)->name ?? '-';
+        })
+        ->addColumn('supplier_name', function ($row) {
+            return optional($row->supplier)->name ?? '-';
+        })
+        ->addColumn('multiple_export', function ($row) {
+            return '<input type="checkbox" name="exportpdf[]" value="'.$row->id.'">';
+        })
+        ->addColumn('action', function ($row) {
+            return '
+                <button onclick="editForm('.$row->id.')" class="btn btn-primary btn-xs">Edit</button>
+                <button onclick="deleteData('.$row->id.')" class="btn btn-danger btn-xs">Delete</button>
+            ';
+        })
+        ->rawColumns(['multiple_export','action'])
+        ->make(true);
+}
+
 
     public function exportProductOutAll()
     {
@@ -193,9 +267,19 @@ class ProductOutController extends Controller
         return (new ExportProductOut)->download('product_out.xlsx');
     }
 
-    public function checkAvailable($id)
+    public function checkAvailable(Request $request)
     {
-        $Product = Product::findOrFail($id);
-        return $Product;
+        $product_id  = $request->product_id;
+        $supplier_id = $request->supplier_id;
+
+        $stock = Stock::where('product_id', $product_id)
+                    ->where('supplier_id', $supplier_id)
+                    ->first();
+
+        return response()->json([
+            'qty'      => $stock ? $stock->qty : 0,
+            'product'  => optional($stock->product)->name ?? '',
+            'location' => optional($stock->supplier)->name ?? ''
+        ]);
     }
 }
