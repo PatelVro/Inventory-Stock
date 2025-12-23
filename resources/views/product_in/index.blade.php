@@ -118,6 +118,7 @@
                 {data: 'date', name: 'date'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ]
+            
         });
 
         function addForm() {

@@ -7,13 +7,17 @@ use App\Exports\ExportProductIn;
 use App\Product;
 use App\Product_In;
 use App\Supplier;
+use App\Stock; // <-- Import Stock model
 use PDF;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 
 
+
 class ProductInController extends Controller
 {
+
+    
     public function __construct()
     {
         $this->middleware('role:admin,staff');
@@ -56,24 +60,39 @@ class ProductInController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'product_id'     => 'required',
-            'supplier_id'    => 'required',
-            'qty'            => 'required',
+            'product_id'  => 'required',
+            'supplier_id' => 'required',
+            'qty'         => 'required',
             'date'        => 'required'
         ]);
 
-        Product_In::create($request->all());
+        $productIn = Product_In::create($request->all());
 
+        // Update product total qty
         $product = Product::findOrFail($request->product_id);
         $product->qty += $request->qty;
         $product->save();
 
-        return response()->json([
-            'success'    => true,
-            'message'    => 'Products In Created'
-        ]);
+        // Update stock table
+        $stock = Stock::firstOrCreate(
+            [
+                'product_id'  => $request->product_id,
+                'supplier_id' => $request->supplier_id
+            ],
+            [
+                'qty' => 0
+            ]
+        );
 
+        $stock->qty += $request->qty;
+        $stock->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Products In Created'
+        ]);
     }
+
 
     /**
      * Display the specified resource.
@@ -108,24 +127,41 @@ class ProductInController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'product_id'     => 'required',
-            'supplier_id'    => 'required',
-            'qty'            => 'required',
+            'product_id'  => 'required',
+            'supplier_id' => 'required',
+            'qty'         => 'required',
             'date'        => 'required'
         ]);
 
-        $Product_In = Product_In::findOrFail($id);
-        $Product_In->update($request->all());
+        $productIn = Product_In::findOrFail($id);
 
+        // Calculate qty difference
+        $qtyDifference = $request->qty - $productIn->qty;
+
+        // Update Product_In
+        $productIn->update($request->all());
+
+        // Update product total qty
         $product = Product::findOrFail($request->product_id);
-        $product->qty += $request->qty;
-        $product->update();
+        $product->qty += $qtyDifference;
+        $product->save();
+
+        // Update stock qty
+        $stock = Stock::where('product_id', $request->product_id)
+                    ->where('supplier_id', $request->supplier_id)
+                    ->first();
+
+        if ($stock) {
+            $stock->qty += $qtyDifference;
+            $stock->save();
+        }
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Product In Updated'
+            'success' => true,
+            'message' => 'Product In Updated'
         ]);
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -134,14 +170,33 @@ class ProductInController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
-    {
-        Product_In::destroy($id);
+{
+    $productIn = Product_In::findOrFail($id);
 
-        return response()->json([
-            'success'    => true,
-            'message'    => 'Products In Deleted'
-        ]);
+    // Reduce stock qty
+    $stock = Stock::where('product_id', $productIn->product_id)
+                  ->where('supplier_id', $productIn->supplier_id)
+                  ->first();
+
+    if ($stock) {
+        $stock->qty -= $productIn->qty;
+        $stock->save();
     }
+
+    // Reduce product total qty
+    $product = Product::findOrFail($productIn->product_id);
+    $product->qty -= $productIn->qty;
+    $product->save();
+
+    // Delete record
+    $productIn->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Products In Deleted'
+    ]);
+}
+
 
 
 

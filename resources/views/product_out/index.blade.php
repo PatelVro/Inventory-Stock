@@ -47,7 +47,7 @@
                     <th>Multiple Export Invoice</th>
                     <th>ID</th>
                     <th>Products</th>
-                    <th>Customer</th>
+                    <th>Location</th>
                     <th>QTY</th>
                     <th>Date</th>
                     <th></th>
@@ -115,7 +115,7 @@
                 {data: 'multiple_export', name: 'multiple_export'},
                 {data: 'id', name: 'id'},
                 {data: 'products_name', name: 'products_name'},
-                {data: 'customer_name', name: 'customer_name'},
+                {data: 'supplier_name', name: 'supplier_name'},
                 {data: 'qty', name: 'qty'},
                 {data: 'date', name: 'date'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
@@ -130,9 +130,28 @@
             $('.modal-title').text('Add Products');
         }
 
-        $(document).on("change","#product_id",function(){
-            checkAvailable(this.value);
+        $(document).on("change", "#product_id, #supplier_id", function () {
+            var product_id = $('#product_id').val();
+            var supplier_id = $('#supplier_id').val();
+
+            if (product_id && supplier_id) {
+                checkAvailable(product_id, supplier_id);
+            }
         });
+
+        function checkAvailable(product_id, supplier_id) {
+            $.ajax({
+                url: "{{ url('checkAvailable') }}",
+                type: "GET",
+                data: { product_id: product_id, supplier_id: supplier_id },
+                dataType: "JSON",
+                success: function(data) {
+                    $('#available').text(data.qty);
+                    $('#productName').text(data.product);
+                    $('#locationName').text(data.location);
+                }
+            });
+        }
 
         function editForm(id) {
             save_method = 'edit';
@@ -149,7 +168,7 @@
 
                     $('#id').val(data.id);
                     $('#product_id').val(data.product_id).trigger('change');
-                    $('#customer_id').val(data.customer_id).trigger('change');
+                    $('#supplier_id').val(data.supplier_id).trigger('change');
                     $('#qty').val(data.qty);
                     $('#date').val(data.date);
                 },
@@ -322,5 +341,14 @@
             });
         });
     </script>
+
+    <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    </script>
+
 
 @endsection
