@@ -131,17 +131,19 @@
         const html5QrCode = new Html5Qrcode("reader");
 
         Html5Qrcode.getCameras().then(cameras => {
-            if (cameras.length) {
-                html5QrCode.start(
-                    cameras[0].id,
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 }
-                    },
-                    onScanSuccess,
-                    onScanFailure
-                );
-            }
+            const backCam = cameras.find(cam =>
+                cam.label.toLowerCase().includes("back") ||
+                cam.label.toLowerCase().includes("rear")
+            );
+
+            html5QrCode.start(
+                backCam ? backCam.id : cameras[0].id,
+                { fps: 10, qrbox: 250 },
+                barcode => {
+                    console.log("Scanned:", barcode);
+                    html5QrCode.stop();
+                }
+            );
         });
         </script>
     <script>
