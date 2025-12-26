@@ -49,9 +49,13 @@
 <h3>Product Transfer</h3>
 <form method="POST">
 <div id="reader" style="width:100%; max-width:400px;"></div>
+
+<button type="button" onclick="startScanner()">Start Scan</button>
+<br>
+
 <input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode" readonly>
 
-<button type="button" onclick="startScanner()">Load Source</button>
+<button type="button" onclick="loadSource()">Load Source</button>
 
 <br>
 <br>
