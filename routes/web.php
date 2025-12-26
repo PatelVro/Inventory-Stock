@@ -11,6 +11,7 @@
 |
 */
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\TransferController;
 
 Route::get('/', function () {
     // return view('auth.login');
@@ -75,6 +76,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/stock', 'StockController@store')->name('stock.store');
     Route::put('/stock/{id}', 'StockController@update')->name('stock.update');
     Route::delete('/stock/{id}', 'StockController@destroy')->name('stock.destroy');
+
+    Route::get('/transfer', [TransferController::class, 'index'])->name('transfer.index');
+    Route::get('/transfer/supplier', [TransferController::class, 'getSupplierByBarcode']);
+    Route::get('/transfer/products', [TransferController::class, 'getSupplierProducts']);
+    Route::post('/transfer/submit', [TransferController::class, 'transfer']);
+    
 
 
     Route::prefix('inventory')->group(function () {

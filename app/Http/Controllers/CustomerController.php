@@ -15,7 +15,7 @@ class CustomerController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:admin,staff');
+        $this->middleware('role:admin');
     }
     /**
      * Display a listing of the resource.
