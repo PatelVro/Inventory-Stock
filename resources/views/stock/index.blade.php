@@ -82,16 +82,15 @@
         <form method="POST" action="{{ route('stock.update',$stock->id) }}">
             @csrf
             @method('PUT')
-            <input type="number" name="qty" value="{{ $stock->qty }}" style="width:80px">
-            <button class="btn btn-warning btn-sm">Update</button>
+            <div class="qnty">{{ $stock->qty }}</div> 
+            <!-- <button class="btn btn-warning btn-sm">Update</button> -->
         </form>
     </td>
     <td>
         <form method="POST" action="{{ route('stock.destroy',$stock->id) }}">
             @csrf
             @method('DELETE')
-            <button class="btn btn-danger btn-sm"
-                    onclick="return confirm('Delete stock?')">Delete</button>
+            <button class="btn btn-danger btn-sm"  onclick="return confirm('Delete stock?')">Delete</button>
         </form>
     </td>
 </tr>
