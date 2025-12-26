@@ -17,6 +17,57 @@
             width: 100% !important;
             margin-bottom: 5px;
         }
+        .btntr {
+            margin: 5px 0px 15px;
+            background: #414141;
+            color: #fff;
+            padding: 5px 15px;
+            border: 2px solid #4d4d4d;
+        }
+        button.scanto.btntr, button.scanf.btntr {
+            display: block;
+            width: 100%;
+            margin: 5px 0px 15px;
+            background: #3e8eba;
+            color: #fff;
+            border: 0;
+            padding: 5px 0;
+            border: 2px solid #3880a7;
+        }
+        button.clear.btntr {
+            display: block;
+            margin: 5px 0;
+        }
+        input#to_barcode, input#from_barcode {
+            padding: 8px 15px;
+            min-width: 100%;
+            border: 1px solid #ddd;
+        }
+        button.clear.btntr {
+            display: block;
+            margin: 0 0 15px 0;
+            background: transparent;
+            color: #125981;
+            border: 0;
+            padding: 0;
+        }
+        .getlisting {
+            background: #fff;
+            padding: 20px 10px;
+            border: 1px solid #ddd;
+            margin: 10px 0 20px;
+        }
+        .confirm-transfer button {
+            background: #01670f;
+            display: block;
+            color: #ffff;
+            width: 100%;
+            padding: 8px;
+            border: 0;
+            font-size: 17px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -48,36 +99,55 @@
 <div class="container">
 <h3>Product Transfer</h3>
 <form method="POST">
-<div id="reader" style="width:100%; max-width:400px;"></div>
 
-<button type="button" onclick="startScanner()">Start Scan</button>
-<br>
+<div class="startscan">
 
-<input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode" readonly>
+    <div id="reader" style="width:100%; max-width:400px;"></div>
 
-<button type="button" onclick="loadSource()">Load Source</button>
+    <button onclick="startScanner('from_barcode')" class="scanf btntr">Scan From</button>
 
-<br>
-<br>
+    <input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode" readonly>
 
-<button onclick="document.getElementById('from_barcode').value=''">
-    Clear
-</button>
-<br>
-<br>
+    <button type="button" onclick="loadSource()" class="loads btntr">Load Source</button>
 
-<select id="product_id" class="select2 product-qty2"></select>
-<input type="number" id="qty" placeholder="Qty">
-<div id="available"></div>
+    <button onclick="document.getElementById('from_barcode').value=''" class="clear btntr">
+        Clear Barcode
+    </button>
 
-<br>
-<br>
-<br>
-<div id="reader" style="width:100%; max-width:400px;"></div>
-<input type="text" id="to_barcode" placeholder="Scan TO supplier barcode" readonly>
+</div>
 
-<button type="button" onclick="submitTransfer()">Transfer</button>
-@csrf
+
+<div class="getlisting">
+
+    <select id="product_id" class="select2 product-qty2"></select>
+
+    <input type="number" id="qty" placeholder="Qty" class="productqty">
+
+    <div id="available"></div>
+
+</div>
+
+<div class="transferlisting"> 
+
+    <div id="reader" style="width:100%; max-width:400px;"></div>
+
+    <button onclick="startScanner('to_barcode')"  class="scanto btntr">Scan To</button>
+
+    <input type="text" id="to_barcode" placeholder="Scan TO supplier barcode" readonly>
+
+    <button onclick="document.getElementById('to_barcode').value=''" class="clear btntr">
+        Clear
+    </button>
+
+</div>
+
+<div class="confirm-transfer">
+
+    <button type="button" onclick="submitTransfer()">Transfer</button>
+    @csrf
+
+</div>
+
 </form>
 
 </div>
@@ -140,7 +210,7 @@
 
         let html5QrCode;
 
-        function startScanner() {
+        function startScanner(targetInputId) {
             html5QrCode = new Html5Qrcode("reader");
 
             Html5Qrcode.getCameras().then(cameras => {
@@ -159,29 +229,32 @@
                         qrbox: 250
                     },
                     (decodedText) => {
-                        // ✅ PUT SCANNED NUMBER INTO INPUT
-                        document.getElementById("from_barcode").value = decodedText;
+                        // ✅ Fill the correct input
+                        document.getElementById(targetInputId).value = decodedText;
 
-                        // Optional: trigger supplier fetch automatically
-                        fetchSupplier(decodedText);
+                        // Auto actions
+                        if (targetInputId === 'from_barcode') {
+                            fetchSupplier(decodedText, 'from');
+                        } else {
+                            fetchSupplier(decodedText, 'to');
+                        }
 
-                        // Stop camera after scan
+                        // Stop camera
                         html5QrCode.stop();
                         document.getElementById("reader").innerHTML = "";
                     }
                 );
             }).catch(err => {
-                alert("Camera not found");
+                alert("Camera not available");
                 console.error(err);
             });
         }
 
-        // OPTIONAL: auto call your existing AJAX
-        function fetchSupplier(barcode) {
+        function fetchSupplier(barcode, type) {
             fetch(`/transfer/supplier?barcode=${barcode}`)
                 .then(res => res.json())
                 .then(data => {
-                    console.log("Supplier:", data);
+                    console.log(type.toUpperCase() + " supplier:", data);
                 });
         }
 
