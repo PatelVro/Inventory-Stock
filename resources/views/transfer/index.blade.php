@@ -49,10 +49,16 @@
 <h3>Product Transfer</h3>
 <form method="POST">
 <div id="reader" style="width:100%; max-width:400px;"></div>
-<input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode">
-<button type="button" onclick="loadSource()">Load Source</button>
+<input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode" readonly>
+
+<button type="button" onclick="startScanner()">Load Source</button>
 
 <br>
+<br>
+
+<button onclick="document.getElementById('from_barcode').value=''">
+    Clear
+</button>
 <br>
 <br>
 
@@ -64,7 +70,7 @@
 <br>
 <br>
 <div id="reader" style="width:100%; max-width:400px;"></div>
-<input type="text" id="to_barcode" placeholder="Scan TO supplier barcode">
+<input type="text" id="to_barcode" placeholder="Scan TO supplier barcode" readonly>
 
 <button type="button" onclick="submitTransfer()">Transfer</button>
 @csrf
@@ -128,24 +134,57 @@
             // silently ignore scan errors
         }
 
-        const html5QrCode = new Html5Qrcode("reader");
+        let html5QrCode;
 
-        Html5Qrcode.getCameras().then(cameras => {
-            const backCam = cameras.find(cam =>
-                cam.label.toLowerCase().includes("back") ||
-                cam.label.toLowerCase().includes("rear")
-            );
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
 
-            html5QrCode.start(
-                backCam ? backCam.id : cameras[0].id,
-                { fps: 10, qrbox: 250 },
-                barcode => {
-                    console.log("Scanned:", barcode);
-                    html5QrCode.stop();
-                }
-            );
-        });
-        </script>
+            Html5Qrcode.getCameras().then(cameras => {
+                // Prefer back camera
+                const backCam = cameras.find(cam =>
+                    cam.label.toLowerCase().includes("back") ||
+                    cam.label.toLowerCase().includes("rear")
+                );
+
+                const cameraId = backCam ? backCam.id : cameras[0].id;
+
+                html5QrCode.start(
+                    cameraId,
+                    {
+                        fps: 10,
+                        qrbox: 250
+                    },
+                    (decodedText) => {
+                        // ✅ PUT SCANNED NUMBER INTO INPUT
+                        document.getElementById("from_barcode").value = decodedText;
+
+                        // Optional: trigger supplier fetch automatically
+                        fetchSupplier(decodedText);
+
+                        // Stop camera after scan
+                        html5QrCode.stop();
+                        document.getElementById("reader").innerHTML = "";
+                    }
+                );
+            }).catch(err => {
+                alert("Camera not found");
+                console.error(err);
+            });
+        }
+
+        // OPTIONAL: auto call your existing AJAX
+        function fetchSupplier(barcode) {
+            fetch(`/transfer/supplier?barcode=${barcode}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Supplier:", data);
+                });
+        }
+
+
+    
+    </script>
+
     <script>
 
         let fromSupplier = null;
