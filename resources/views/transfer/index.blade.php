@@ -98,7 +98,7 @@
 
 <div class="container">
 <h3>Product Transfer</h3>
-<form method="POST">
+<form method="POST" onsubmit="return false;">
 
 <div class="startscan">
 
