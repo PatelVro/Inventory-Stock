@@ -166,7 +166,7 @@ desired effect
             Inventory Stock Management
         </div>
         <!-- Default to the left -->
-        <strong>Copyright &copy; {{ date('Y') }} <a href="https://connectwithdev.com">MuliaTech</a>.</strong> All rights reserved.
+        <strong>Copyright &copy; {{ date('Y') }} <a href="https://canadianoutlet.com">Canadian Outlet</a>.</strong> All rights reserved.
     </footer>
 </div>
 <!-- ./wrapper -->
