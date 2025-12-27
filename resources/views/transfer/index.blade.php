@@ -68,6 +68,18 @@
             font-weight: 500;
             text-transform: uppercase;
         }
+        .select2-container--default .select2-selection--single, .select2-selection .select2-selection--single {
+            border: 1px solid #666;
+            border-radius: 0;
+            padding: 8px 12px;
+            height: 40px;
+            font-size: 15px;
+        }
+        .productqty {
+            margin: 9px 0;
+            padding: 6px 10px;
+            font-size: 15px;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -331,6 +343,10 @@
                     qty: $('#qty').val()
                 }, function () {
                     alert('Transfer successful');
+
+                    // 1️⃣ Refresh the page after success
+                    location.reload();
+
                 });
             });
         }
