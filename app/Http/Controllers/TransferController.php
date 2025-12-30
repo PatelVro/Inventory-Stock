@@ -69,51 +69,55 @@ class TransferController extends Controller
         $request->validate([
             'from_supplier_id' => 'required',
             'to_supplier_id'   => 'required|different:from_supplier_id',
-            'product_id'       => 'required',
-            'qty'              => 'required|integer|min:1'
+            'products'         => 'required|array|min:1',
+            'products.*.product_id' => 'required|integer',
+            'products.*.qty'        => 'required|integer|min:1'
         ]);
 
         DB::transaction(function () use ($request) {
 
-            // SOURCE STOCK
-            $fromStock = Stock::where('supplier_id', $request->from_supplier_id)
-                ->where('product_id', $request->product_id)
-                ->lockForUpdate()
-                ->firstOrFail();
+            foreach ($request->products as $item) {
 
-            if ($fromStock->qty < $request->qty) {
-                abort(422, 'Not enough stock at source');
-            }
+                $fromStock = Stock::where('supplier_id', $request->from_supplier_id)
+                    ->where('product_id', $item['product_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            // PRODUCT OUT
-            Product_Out::create([
-                'product_id'  => $request->product_id,
-                'supplier_id' => $request->from_supplier_id,
-                'qty'         => $request->qty,
-                'date'        => now()
-            ]);
+                if ($fromStock->qty < $item['qty']) {
+                    abort(422, 'Not enough stock for product ID ' . $item['product_id']);
+                }
 
-            $fromStock->decrement('qty', $request->qty);
+                // Product Out
+                Product_Out::create([
+                    'product_id'  => $item['product_id'],
+                    'supplier_id' => $request->from_supplier_id,
+                    'qty'         => $item['qty'],
+                    'date'        => now()
+                ]);
 
-            // DESTINATION STOCK
-            $toStock = Stock::firstOrCreate(
-                [
+                $fromStock->decrement('qty', $item['qty']);
+
+                // Destination stock
+                $toStock = Stock::firstOrCreate(
+                    [
+                        'supplier_id' => $request->to_supplier_id,
+                        'product_id'  => $item['product_id']
+                    ],
+                    ['qty' => 0]
+                );
+
+                // Product In
+                Product_In::create([
+                    'product_id'  => $item['product_id'],
                     'supplier_id' => $request->to_supplier_id,
-                    'product_id'  => $request->product_id
-                ],
-                ['qty' => 0]
-            );
+                    'qty'         => $item['qty'],
+                    'date'        => now()
+                ]);
 
-            // PRODUCT IN
-            Product_In::create([
-                'product_id'  => $request->product_id,
-                'supplier_id' => $request->to_supplier_id,
-                'qty'         => $request->qty,
-                'date'        => now()
-            ]);
-
-            $toStock->increment('qty', $request->qty);
+                $toStock->increment('qty', $item['qty']);
+            }
         });
+
 
         return response()->json([
             'success' => true,

@@ -80,6 +80,55 @@
             padding: 6px 10px;
             font-size: 15px;
         }
+
+        table#productTable {
+            border: 0;
+            margin-bottom: 10px;
+        }
+
+        table#productTable th.ptp {
+            width: 65%;
+        }
+
+
+        table#productTable .ptq {
+            width: 15%;
+        }
+
+        table#productTable th.pta, table#productTable th.pta {
+            width: 10%;
+        }
+
+
+        td.ptp select, td.ptq input {
+            width: 100% !important;
+            padding: 10px 5px;
+            border: 0;
+            color: #000;
+        }
+
+        td.ptm button {
+            background: transparent;
+            border: 0;
+            font-size: 10px;
+            padding: 5px;
+        }
+
+        button.addpro {
+            background: #000;
+            color: #ffff;
+            border: 0;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        #productTable th {
+            padding: 5px;
+            background: #eee;
+            color: #000;
+        }
+        section.content.container-fluid {
+            padding: 0;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -118,7 +167,7 @@
 
     <button onclick="startScanner('from_barcode')" class="scanf btntr">Scan From</button>
 
-    <input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode" readonly>
+    <input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode" >
 
     <button type="button" onclick="loadSource()" class="loads btntr">Load Source</button>
 
@@ -131,11 +180,26 @@
 
 <div class="getlisting">
 
-    <select id="product_id" class="select2 product-qty2"></select>
+
+    <table border="1" width="100%" id="productTable">
+        <thead>
+            <tr>
+                <th class="ptp">Product</th>
+                <th class="pta">Available</th>
+                <th class="ptq">Qty</th>
+                <th class="ptm"> - </th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button type="button" onclick="addRow()" class="addpro">➕ Add Product</button>
+
+    <!-- <select id="product_id" class="select2 product-qty2"></select>
 
     <input type="number" id="qty" placeholder="Qty" class="productqty">
 
-    <div id="available"></div>
+    <div id="available"></div> -->
 
 </div>
 
@@ -145,7 +209,7 @@
 
     <button onclick="startScanner('to_barcode')"  class="scanto btntr">Scan To</button>
 
-    <input type="text" id="to_barcode" placeholder="Scan TO supplier barcode" readonly>
+    <input type="text" id="to_barcode" placeholder="Scan TO supplier barcode" >
 
     <button onclick="document.getElementById('to_barcode').value=''" class="clear btntr">
         Clear
@@ -195,6 +259,9 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
+
+        
+
         let scanStep = 'from'; // from → to
 
         function onScanSuccess(decodedText) {
@@ -278,32 +345,94 @@
 
         let fromSupplier = null;
         let toSupplier = null;
+        let supplierStocks = [];
+
+
+        // function loadSource() {
+        //     let barcode = $('#from_barcode').val();
+        //     $.get('/transfer/supplier', { barcode: barcode })
+        //         .done(function (s) {
+        //             fromSupplier = s.id;
+
+        //             $.get('/transfer/products', { supplier_id: s.id }, function (stocks) {
+        //                 $('#product_id').empty();
+        //                 stocks.forEach(st => {
+        //                     $('#product_id').append(
+        //                         `<option value="${st.product_id}" data-qty="${st.qty}">
+        //                             ${st.product.name} (${st.qty})
+        //                         </option>`
+        //                     );
+        //                 });
+        //                 $('#product_id').trigger('change');
+        //             });
+
+        //         })
+        //         .fail(function () {
+        //             alert('Source supplier not found');
+        //         });
+        // }
+
 
         function loadSource() {
-            let barcode = $('#from_barcode').val();
-            $.get('/transfer/supplier', { barcode: barcode })
-                .done(function (s) {
-                    fromSupplier = s.id;
+            $.get('/transfer/supplier', { barcode: $('#from_barcode').val() }, function (s) {
+                fromSupplier = s.id;
 
-                    $.get('/transfer/products', { supplier_id: s.id }, function (stocks) {
-                        $('#product_id').empty();
-                        stocks.forEach(st => {
-                            $('#product_id').append(
-                                `<option value="${st.product_id}" data-qty="${st.qty}">
-                                    ${st.product.name} (${st.qty})
-                                </option>`
-                            );
-                        });
-                        $('#product_id').trigger('change');
-                    });
-
-                })
-                .fail(function () {
-                    alert('Source supplier not found');
+                $.get('/transfer/products', { supplier_id: s.id }, function (stocks) {
+                    supplierStocks = stocks;
+                    $('#productTable tbody').empty();
+                    addRow(); // start with one row
                 });
+            }).fail(() => alert('Source supplier not found'));
         }
 
 
+        function addRow() {
+            let options = supplierStocks.map(st =>
+                `<option value="${st.product_id}" data-qty="${st.qty}">
+                    ${st.product.name}
+                </option>`
+            ).join('');
+
+            let row = `
+            <tr>
+                <td class="ptp">
+                    <select class="product_select" onchange="updateAvailable(this)">
+                        <option value="">Select product</option>
+                        ${options}
+                    </select>
+                </td>
+                <td class="available pta">-</td>
+                <td class="ptq">
+                    <input type="number" class="qty_input" min="1">
+                </td>
+                <td class="ptm">
+                    <button type="button" onclick="removeRow(this)">❌</button>
+                </td>
+            </tr>
+            `;
+
+            $('#productTable tbody').append(row);
+        }
+
+
+        function updateAvailable(select) {
+            let available = $('option:selected', select).data('qty') || 0;
+            let row = $(select).closest('tr');
+            row.find('.available').text(available);
+
+            row.find('.qty_input').off().on('input', function () {
+                if (parseInt(this.value) > available) {
+                    alert('Quantity exceeds available stock');
+                    this.value = available;
+                }
+            });
+        }
+
+        function removeRow(btn) {
+            $(btn).closest('tr').remove();
+        }
+
+        
 
         //$('button').prop('disabled', true);
         
@@ -331,7 +460,46 @@
             }
         });
 
+        // function submitTransfer() {
+        //     $.get('/transfer/supplier', { barcode: $('#to_barcode').val() }, function (s) {
+        //         toSupplier = s.id;
+
+        //         $.post('/transfer/submit', {
+        //             _token: $('meta[name=csrf-token]').attr('content'),
+        //             from_supplier_id: fromSupplier,
+        //             to_supplier_id: toSupplier,
+        //             product_id: $('#product_id').val(),
+        //             qty: $('#qty').val()
+        //         }, function () {
+        //             alert('Transfer successful');
+
+        //             // 1️⃣ Refresh the page after success
+        //             location.reload();
+
+        //         });
+        //     });
+        // }
+
         function submitTransfer() {
+            let products = [];
+
+            $('#productTable tbody tr').each(function () {
+                let productId = $(this).find('.product_select').val();
+                let qty = $(this).find('.qty_input').val();
+
+                if (productId && qty > 0) {
+                    products.push({
+                        product_id: productId,
+                        qty: qty
+                    });
+                }
+            });
+
+            if (products.length === 0) {
+                alert('Add at least one product');
+                return;
+            }
+
             $.get('/transfer/supplier', { barcode: $('#to_barcode').val() }, function (s) {
                 toSupplier = s.id;
 
@@ -339,18 +507,14 @@
                     _token: $('meta[name=csrf-token]').attr('content'),
                     from_supplier_id: fromSupplier,
                     to_supplier_id: toSupplier,
-                    product_id: $('#product_id').val(),
-                    qty: $('#qty').val()
+                    products: products
                 }, function () {
                     alert('Transfer successful');
-
-                    // 1️⃣ Refresh the page after success
                     location.reload();
-
                 });
-            });
+            }).fail(() => alert('Destination supplier not found'));
         }
-
+        </script>
 
     </script>
 
