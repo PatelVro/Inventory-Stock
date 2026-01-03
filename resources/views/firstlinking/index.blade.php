@@ -149,19 +149,22 @@ function removeRow(btn, pid) {
 let html5QrCode;
 function startScanner() {
     html5QrCode = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras().then(cameras => {
-        if(cameras.length){
-            let cameraId = cameras[0].id;
-            html5QrCode.start(cameraId, { fps: 10, qrbox: 250 },
-                decodedText => {
-                    $('#supplier_barcode').val(decodedText);
-                    html5QrCode.stop();
-                },
-                error => {}
-            );
-        } else alert('No camera found');
-    }).catch(err => alert(err));
+    const config = { fps: 10, qrbox: 250 };
+
+    // Try to open back camera
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        decodedText => {
+            $('#supplier_barcode').val(decodedText);
+            html5QrCode.stop();
+        },
+        error => {}
+    ).catch(err => {
+        alert("Unable to access back camera: " + err);
+    });
 }
+
 
 function submitFirstlinking() {
     let barcode = $('#supplier_barcode').val();
