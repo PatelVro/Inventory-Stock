@@ -44,7 +44,7 @@
                 <li class=""><a href="{{ route('company.index') }}"><i class="fa fa-building"></i> <span>Company Details</span></a></li>
                 <li class=""><a href="{{ route('users.index') }}"><i class="fa fa-user-o"></i> <span>Users</span></a></li>
             @endif
-
+            <li class=""><a href="{{ route('firstlinking.index') }}"><i class="fa fa-sign-in"></i> <span>Product Adding</span></a></li>
             <li class=""><a href="{{ route('transfer.index') }}"><i class="fa fa-building-o"></i> <span>Transfer</span></a></li>
         </ul>
         <!-- /.sidebar-menu -->

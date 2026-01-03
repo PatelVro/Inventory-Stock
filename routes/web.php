@@ -12,6 +12,10 @@
 */
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\TransferController;
+use App\Http\Controllers\FirstlinkingController;
+use App\Http\Controllers\ProductImportController;
+
+
 
 Route::get('/', function () {
     // return view('auth.login');
@@ -54,6 +58,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('products','ProductController');
     Route::get('/apiProducts','ProductController@apiProducts')->name('api.products');
+     Route::post('products/import', [ProductImportController::class, 'import'])->name('products.import');
+
 
     Route::resource('productsOut','ProductOutController');
     Route::get('/apiProductsOut','ProductOutController@apiProductsOut')->name('api.productsOut');
@@ -83,6 +89,19 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/transfer/submit', [TransferController::class, 'transfer']);
     
 
+    
+
+    
+
+    Route::prefix('firstlinking')->group(function () {
+        Route::get('/', [FirstlinkingController::class, 'index'])->name('firstlinking.index');
+        Route::get('/products', [FirstlinkingController::class, 'productsByCategory'])->name('firstlinking.products');
+        Route::get('/supplier', [FirstlinkingController::class, 'supplierByBarcode'])->name('firstlinking.supplierByBarcode');
+        Route::post('/submit', [FirstlinkingController::class, 'submit'])->name('firstlinking.submit');
+    });
+
+    
+
 
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
@@ -98,4 +117,12 @@ Route::group(['middleware' => 'auth'], function () {
 Route::get('/pdf-test', function () {
     $pdf = PDF::loadHTML('<h1>Hello from Laravel 5.8!</h1>');
     return $pdf->download('test.pdf');
+});
+
+
+use Illuminate\Support\Facades\Route;
+Route::post('/csrf-test', function () {
+    return response()->json([
+        'status' => 'CSRF OK'
+    ]);
 });

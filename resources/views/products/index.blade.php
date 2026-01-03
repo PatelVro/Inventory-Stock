@@ -54,6 +54,12 @@
         <!-- /.box-body -->
     </div>
 
+    <form action="{{ route('products.import') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <input type="file" name="file" required>
+        <button type="submit" class="btn btn-success">Import Products</button>
+    </form>
+
     @include('products.form')
 
 @endsection
