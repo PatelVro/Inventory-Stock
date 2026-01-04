@@ -184,7 +184,7 @@ class SupplierController extends Controller
                 return $suppliers->barcode->name;
             })
             ->addColumn('barcode_image', function ($suppliers){
-                return '<a href="https://barcode.tec-it.com/barcode.ashx?data='.$suppliers->barcode->name.'&code=EAN13&dpi=96&imagetype=Png&download=true" style="margin: 0 auto;display: block;text-align:center;" title="Download Barcode" target="_blank" download><img class="img-responsive img-thumbnail" src="https://barcode.tec-it.com/barcode.ashx?data='.$suppliers->barcode->name.'&code=EAN13&dpi=96"><br>Download</a>';
+                return '<a href="https://barcode.tec-it.com/barcode.ashx?data='.$suppliers->barcode->name.'&code=QRCode&dpi=96&imagetype=Png&download=true" style="margin: 0 auto;display: block;text-align:center;" title="Download Barcode" target="_blank" download><img class="img-responsive img-thumbnail" src="https://barcode.tec-it.com/barcode.ashx?data='.$suppliers->barcode->name.'&code=QRCode&dpi=96"><br>Download</a>';
             })
             ->addColumn('show_photo', function($suppliers){
                 if ($suppliers->image == NULL){
