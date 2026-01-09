@@ -39,6 +39,17 @@
                             <input data-date-format='yyyy-mm-dd' type="text" class="form-control" id="date" name="date"   required>
                             <span class="help-block with-errors"></span>
                         </div>
+                        <div class="form-group">
+                            <label for="image">Product Image</label>
+                            <input
+                                type="file"
+                                name="image"
+                                id="image"
+                                class="form-control"
+                                accept="image/*"
+                                capture="environment"
+                            >
+                        </div>
 
                     </div>
                     <!-- /.box-body -->

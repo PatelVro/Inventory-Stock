@@ -48,6 +48,7 @@
                     <th>ID</th>
                     <th>Products</th>
                     <th>Location</th>
+                    <th>Image</th>
                     <th>QTY</th>
                     <th>Date</th>
                     <th></th>
@@ -116,6 +117,7 @@
                 {data: 'id', name: 'id'},
                 {data: 'products_name', name: 'products_name'},
                 {data: 'supplier_name', name: 'supplier_name'},
+                {data: 'image', name: 'image', orderable: false, searchable: false},
                 {data: 'qty', name: 'qty'},
                 {data: 'date', name: 'date'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}

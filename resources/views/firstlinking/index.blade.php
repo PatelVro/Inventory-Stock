@@ -93,7 +93,16 @@
         </div>
 
         
-
+        <div>
+            <label>Step 5: Take Photo</label>
+            <input
+                type="file"
+                id="image"
+                name="image"
+                accept="image/*"
+                capture="environment"
+            >
+        </div>
         <div>
             <button type="button" onclick="submitFirstlinking()" class="submit">Submit</button>
         </div>
@@ -179,14 +188,22 @@ function submitFirstlinking() {
         return;
     }
 
+    let formData = new FormData();
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+    formData.append('supplier_barcode', barcode);
+    formData.append('products', JSON.stringify(products));
+
+    let imageFile = document.getElementById('image').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
     $.ajax({
         url: "{{ route('firstlinking.submit') }}",
         type: "POST",
-        data: {
-            _token: $('meta[name="csrf-token"]').attr('content'),
-            supplier_barcode: barcode,
-            products: products
-        },
+        data: formData,
+        contentType: false,
+        processData: false,
         success: function (res) {
             alert(res.message);
             location.reload();
@@ -196,6 +213,7 @@ function submitFirstlinking() {
         }
     });
 }
+
 
 </script>
 @endsection
