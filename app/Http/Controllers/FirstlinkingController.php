@@ -55,14 +55,34 @@ class FirstlinkingController extends Controller
     // Submit firstlinking
     public function submit(Request $request)
     {
-        $validated = $request->validate([
+        // Basic validation
+        $request->validate([
             'supplier_barcode' => 'required',
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.qty' => 'required|integer|min:1'
+            'products' => 'required',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        $barcode = Barcode::where('name', $validated['supplier_barcode'])->first();
+        // Decode products JSON
+        $products = json_decode($request->products, true);
+
+        if (!is_array($products) || count($products) === 0) {
+            return response()->json(['message' => 'Invalid product data'], 422);
+        }
+
+        // Validate each product
+        foreach ($products as $item) {
+            if (
+                !isset($item['product_id']) ||
+                !isset($item['qty']) ||
+                !is_numeric($item['qty']) ||
+                $item['qty'] <= 0
+            ) {
+                return response()->json(['message' => 'Invalid product entry'], 422);
+            }
+        }
+
+        // Find barcode + supplier
+        $barcode = Barcode::where('name', $request->supplier_barcode)->first();
 
         if (!$barcode || !$barcode->supplier) {
             return response()->json(['message' => 'Scan location first'], 400);
@@ -70,12 +90,27 @@ class FirstlinkingController extends Controller
 
         $supplierId = $barcode->supplier->id;
 
-        DB::transaction(function () use ($supplierId, $request) {
-            foreach ($request->products as $item) {
+        // Save image once
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imageName = time().'_'.$request->image->getClientOriginalName();
+            $request->image->move(public_path('uploads/product_in'), $imageName);
+            $imagePath = 'uploads/product_in/'.$imageName;
+        }
+
+        // DB transaction
+        DB::transaction(function () use ($supplierId, $products, $imagePath) {
+
+            foreach ($products as $item) {
+
                 $stock = Stock::firstOrCreate(
-                    ['supplier_id' => $supplierId, 'product_id' => $item['product_id']],
+                    [
+                        'supplier_id' => $supplierId,
+                        'product_id'  => $item['product_id']
+                    ],
                     ['qty' => 0]
                 );
+
                 $stock->qty += $item['qty'];
                 $stock->save();
 
@@ -83,12 +118,14 @@ class FirstlinkingController extends Controller
                     'product_id'  => $item['product_id'],
                     'supplier_id' => $supplierId,
                     'qty'         => $item['qty'],
-                    'date'        => now()
+                    'date'        => now(),
+                    'image'       => $imagePath
                 ]);
             }
         });
 
         return response()->json(['message' => 'Products linked successfully']);
     }
+
 
 }

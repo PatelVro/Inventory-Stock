@@ -64,7 +64,8 @@ class ProductOutController extends Controller
             'product_id'  => 'required|integer',
             'supplier_id' => 'required|integer',
             'qty'         => 'required|integer|min:1',
-            'date'        => 'required'
+            'date'        => 'required',
+            'image'       => 'required|image|mimes:jpg,jpeg,png|max:2048' // <- required now
         ]);
 
         // Find stock by product + supplier
@@ -86,16 +87,25 @@ class ProductOutController extends Controller
             ], 422);
         }
 
-        // Save product out
-        $productOut = Product_Out::create($request->all());
+        $imageName = time().'_'.str_replace(' ', '_', $request->image->getClientOriginalName());
+        $request->image->move(public_path('uploads'), $imageName);
+        $imagePath = 'uploads/'.$imageName;
+
+        $productOut = Product_Out::create([
+            'product_id'  => $request->product_id,
+            'supplier_id' => $request->supplier_id,
+            'qty'         => $request->qty,
+            'date'        => $request->date,
+            'image'       => $imagePath
+        ]);
 
         // Reduce stock qty
-        $stock->qty = $stock->qty - $request->qty;
+        $stock->qty -= $request->qty;
         $stock->save();
 
         // Reduce product total qty
         $product = Product::find($request->product_id);
-        $product->qty = $product->qty - $request->qty;
+        $product->qty -= $request->qty;
         $product->save();
 
         return response()->json([
@@ -103,6 +113,7 @@ class ProductOutController extends Controller
             'message' => 'Product Out saved and stock updated'
         ]);
     }
+
 
 
 
@@ -138,16 +149,22 @@ class ProductOutController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->validate($request, [
+        $request->validate([
             'product_id'  => 'required',
             'supplier_id' => 'required',
             'qty'         => 'required|numeric|min:1',
-            'date'        => 'required'
+            'date'        => 'required',
+            'image'       => 'required|image|mimes:jpg,jpeg,png|max:2048' // <- required now
         ]);
 
         $productOut = Product_Out::findOrFail($id);
 
-        // Calculate difference
+        // Handle image upload
+        $imageName = time().'_'.$request->image->getClientOriginalName();
+        $request->image->move(public_path('uploads'), $imageName);
+        $productOut->image = 'uploads/'.$imageName;
+
+        // Calculate qty difference for stock and product update
         $qtyDifference = $request->qty - $productOut->qty;
 
         $stock = Stock::where('product_id', $request->product_id)
@@ -162,22 +179,27 @@ class ProductOutController extends Controller
         }
 
         // Update product_out
-        $productOut->update($request->all());
+        $productOut->product_id  = $request->product_id;
+        $productOut->supplier_id = $request->supplier_id;
+        $productOut->qty         = $request->qty;
+        $productOut->date        = $request->date;
+        $productOut->save();
+
+        // Update stock qty
+        $stock->qty -= $qtyDifference;
+        $stock->save();
 
         // Update product qty
         $product = Product::findOrFail($request->product_id);
         $product->qty -= $qtyDifference;
         $product->save();
 
-        // Update stock qty
-        $stock->qty -= $qtyDifference;
-        $stock->save();
-
         return response()->json([
             'success' => true,
             'message' => 'Product Out Updated'
         ]);
     }
+
 
 
     /**
@@ -236,7 +258,13 @@ class ProductOutController extends Controller
                 <button onclick="deleteData('.$row->id.')" class="btn btn-danger btn-xs">Delete</button>
             ';
         })
-        ->rawColumns(['multiple_export','action'])
+        ->addColumn('image', function ($productsOut) {
+            if ($productsOut->image) {
+                return '<img src="'.asset($productsOut->image).'" width="60" class="img-thumbnail">';
+            }
+            return '-';
+        })
+        ->rawColumns(['multiple_export','action','image'])
         ->make(true);
 }
 

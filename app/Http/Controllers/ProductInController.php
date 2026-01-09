@@ -63,25 +63,32 @@ class ProductInController extends Controller
             'product_id'  => 'required',
             'supplier_id' => 'required',
             'qty'         => 'required',
-            'date'        => 'required'
+            'date'        => 'required',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        $productIn = Product_In::create($request->all());
+        $data = $request->all();
 
-        // Update product total qty
+        if ($request->hasFile('image')) {
+            $imageName = time().'_'.$request->image->getClientOriginalName();
+            $request->image->move(public_path('uploads'), $imageName);
+            $data['image'] = 'uploads/'.$imageName;
+        }
+
+        $productIn = Product_In::create($data);
+
+        // Update product qty
         $product = Product::findOrFail($request->product_id);
         $product->qty += $request->qty;
         $product->save();
 
-        // Update stock table
+        // Update stock
         $stock = Stock::firstOrCreate(
             [
                 'product_id'  => $request->product_id,
                 'supplier_id' => $request->supplier_id
             ],
-            [
-                'qty' => 0
-            ]
+            ['qty' => 0]
         );
 
         $stock->qty += $request->qty;
@@ -92,6 +99,7 @@ class ProductInController extends Controller
             'message' => 'Products In Created'
         ]);
     }
+
 
 
     /**
@@ -200,28 +208,24 @@ class ProductInController extends Controller
 
 
 
-    public function apiProductsIn(){
-        $product = Product_In::all();
+    public function apiProductsIn(){ 
+        $product = Product_In::all(); 
+        return Datatables::of($product) 
+        ->addColumn('products_name', function ($product){ return $product->product->name; }) 
+        ->addColumn('supplier_name', function ($product){ return $product->supplier->name; }) 
+        ->addColumn('multiple_export', function ($product){ return '<input type="checkbox" name="exportpdf[]" class="checkbox" value="'. $product->id .'">'; }) 
+        ->addColumn('action', function($product){ return '<a onclick="editForm('. $product->id .')" class="btn btn-primary btn-xs"><i class="glyphicon glyphicon-edit"></i> Edit</a> ' . '<a onclick="deleteData('. $product->id .')" class="btn btn-danger btn-xs"><i class="glyphicon glyphicon-trash"></i> Delete</a> '; }) 
+        ->addColumn('image', function ($product) {
+            if ($product->image) {
+                return '<img src="'.asset($product->image).'" width="60" class="img-thumbnail">';
+            }
+            return '-';
+        })
 
-        return Datatables::of($product)
-            ->addColumn('products_name', function ($product){
-                return $product->product->name;
-            })
-            ->addColumn('supplier_name', function ($product){
-                return $product->supplier->name;
-            })
-            ->addColumn('multiple_export', function ($product){
-                return '<input type="checkbox" name="exportpdf[]" class="checkbox" value="'. $product->id .'">';
-            })
-            ->addColumn('action', function($product){
-                return '<a onclick="editForm('. $product->id .')" class="btn btn-primary btn-xs"><i class="glyphicon glyphicon-edit"></i> Edit</a> ' .
-                    '<a onclick="deleteData('. $product->id .')" class="btn btn-danger btn-xs"><i class="glyphicon glyphicon-trash"></i> Delete</a> ';
-
-
-            })
-            ->rawColumns(['multiple_export','products_name','supplier_name','action'])->make(true);
-
+        ->rawColumns(['multiple_export','products_name','supplier_name','image','action'])->make(true); 
     }
+    
+    
 
     public function exportProductInAll()
     {

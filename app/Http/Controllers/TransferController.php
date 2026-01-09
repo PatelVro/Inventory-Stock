@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Barcode;
@@ -12,33 +11,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TransferController extends Controller
-{   
+{
     public function __construct()
     {
-        $this->middleware('role:staff');
+        $this->middleware('role:staff,admin');
     }
 
+    // Show transfer page
     public function index()
     {
         return view('transfer.index');
     }
 
-    // Step 1 & 4: Get supplier by barcode
+    // Get supplier by barcode
     public function getSupplierByBarcode(Request $request)
     {
-        $request->validate([
-            'barcode' => 'required'
-        ]);
+        $request->validate(['barcode' => 'required']);
 
-        // 1️⃣ Find barcode by scanned number
         $barcode = Barcode::where('name', $request->barcode)->first();
 
         if (!$barcode) {
             return response()->json(['error' => 'Barcode not found'], 404);
         }
 
-        // 2️⃣ Get supplier linked to this barcode
-        $supplier = $barcode->supplier; // <-- THIS LINE YOU ASKED ABOUT
+        $supplier = $barcode->supplier;
 
         if (!$supplier) {
             return response()->json(['error' => 'Supplier not found'], 404);
@@ -47,10 +43,7 @@ class TransferController extends Controller
         return response()->json($supplier);
     }
 
-
-    
-
-    // Step 2: Get products at supplier
+    // Get products for supplier
     public function getSupplierProducts(Request $request)
     {
         $stocks = Stock::with('product')
@@ -61,22 +54,21 @@ class TransferController extends Controller
         return response()->json($stocks);
     }
 
-
-
-    // Step 3 & 4: Transfer logic
+    // Submit transfer
     public function transfer(Request $request)
     {
         $request->validate([
             'from_supplier_id' => 'required',
             'to_supplier_id'   => 'required|different:from_supplier_id',
-            'products'         => 'required|array|min:1',
-            'products.*.product_id' => 'required|integer',
-            'products.*.qty'        => 'required|integer|min:1'
+            'products'         => 'required|json',
+            'images.*'         => 'nullable|image|max:2048',
         ]);
 
-        DB::transaction(function () use ($request) {
+        $products = json_decode($request->products, true);
 
-            foreach ($request->products as $item) {
+        DB::transaction(function () use ($request, $products) {
+
+            foreach ($products as $index => $item) {
 
                 $fromStock = Stock::where('supplier_id', $request->from_supplier_id)
                     ->where('product_id', $item['product_id'])
@@ -87,41 +79,71 @@ class TransferController extends Controller
                     abort(422, 'Not enough stock for product ID ' . $item['product_id']);
                 }
 
-                // Product Out
+                // ✅ Default image paths
+                $outImagePath = null;
+                $inImagePath  = null;
+
+                if ($request->hasFile("images.$index")) {
+                    $image     = $request->file("images.$index");
+                    $fileName  = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+                    // 📂 Product Out image
+                    $outDir = public_path('uploads/product_out');
+                    if (!file_exists($outDir)) {
+                        mkdir($outDir, 0755, true);
+                    }
+                    $image->move($outDir, $fileName);
+                    $outImagePath = 'uploads/product_out/' . $fileName;
+
+                    // 📂 Product In image (copy)
+                    $inDir = public_path('uploads/product_in');
+                    if (!file_exists($inDir)) {
+                        mkdir($inDir, 0755, true);
+                    }
+                    copy(
+                        public_path($outImagePath),
+                        public_path('uploads/product_in/' . $fileName)
+                    );
+                    $inImagePath = 'uploads/product_in/' . $fileName;
+                }
+
+                // 🔻 Product Out
                 Product_Out::create([
                     'product_id'  => $item['product_id'],
                     'supplier_id' => $request->from_supplier_id,
                     'qty'         => $item['qty'],
-                    'date'        => now()
+                    'date'        => now(),
+                    'image'       => $outImagePath,
                 ]);
 
                 $fromStock->decrement('qty', $item['qty']);
 
-                // Destination stock
+                // 🔺 Product In
                 $toStock = Stock::firstOrCreate(
                     [
                         'supplier_id' => $request->to_supplier_id,
-                        'product_id'  => $item['product_id']
+                        'product_id'  => $item['product_id'],
                     ],
                     ['qty' => 0]
                 );
 
-                // Product In
                 Product_In::create([
                     'product_id'  => $item['product_id'],
                     'supplier_id' => $request->to_supplier_id,
                     'qty'         => $item['qty'],
-                    'date'        => now()
+                    'date'        => now(),
+                    'image'       => $inImagePath,
                 ]);
 
                 $toStock->increment('qty', $item['qty']);
             }
         });
 
-
         return response()->json([
             'success' => true,
-            'message' => 'Transfer completed successfully'
+            'message' => 'Transfer completed successfully',
         ]);
     }
+
+
 }
