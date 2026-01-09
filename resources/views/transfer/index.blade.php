@@ -115,14 +115,26 @@ function removeRow(btn) { $(btn).closest('tr').remove(); }
 // QR Scanner
 function startScanner(targetId) {
     let html5QrCode = new Html5Qrcode(targetId === 'from_barcode' ? "reader" : "reader2");
+
     Html5Qrcode.getCameras().then(cameras => {
-        const cameraId = cameras[0].id;
-        html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, (decodedText) => {
-            document.getElementById(targetId).value = decodedText;
-            html5QrCode.stop();
-        });
+        if (cameras && cameras.length) {
+            // Look for the rear camera
+            let rearCamera = cameras.find(cam => /back|rear|environment/i.test(cam.label)) || cameras[0];
+
+            html5QrCode.start(
+                rearCamera.id,
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    document.getElementById(targetId).value = decodedText;
+                    html5QrCode.stop();
+                }
+            );
+        } else {
+            console.error("No cameras found.");
+        }
     }).catch(err => console.error(err));
 }
+
 
 // Submit transfer
 function submitTransfer() {
