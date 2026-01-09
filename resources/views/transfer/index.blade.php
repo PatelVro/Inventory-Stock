@@ -9,19 +9,21 @@
 <link rel="stylesheet" href="{{ asset('assets/bower_components/bootstrap-daterangepicker/daterangepicker.css') }}">
 
 <style>
-/* Table & buttons styles */
 .btntr { margin:5px 0; padding:5px 15px; border:2px solid #4d4d4d; color:#fff; background:#414141; }
-button.scanto.btntr, button.scanf.btntr { background:#3e8eba; border:0; color:#fff; width:100%; }
+button.scanto.btntr, button.scanf.btntr { background:#3e8eba; border:0; width:100%; }
 button.clear.btntr { background:transparent; color:#125981; border:0; }
 .getlisting { background:#fff; padding:20px 10px; border:1px solid #ddd; margin:10px 0 20px; }
-.confirm-transfer button { background:#01670f; color:#fff; width:100%; padding:8px; border:0; font-size:17px; font-weight:500; text-transform:uppercase; }
+.confirm-transfer button { background:#01670f; color:#fff; width:100%; padding:10px; font-size:17px; }
 table#productTable th, table#productTable td { padding:5px; }
+.transfer-image { margin:15px 0; }
 </style>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-$.ajaxSetup({ headers:{ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+$.ajaxSetup({
+    headers:{ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+});
 </script>
 @endsection
 
@@ -29,14 +31,16 @@ $.ajaxSetup({ headers:{ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('conte
 <div class="container">
     <h3>Product Transfer</h3>
 
+    {{-- FROM --}}
     <div class="startscan">
         <div id="reader" style="width:100%; max-width:400px;"></div>
         <button onclick="startScanner('from_barcode')" class="scanf btntr">Scan From</button>
         <input type="text" id="from_barcode" placeholder="Scan FROM supplier barcode">
-        <button type="button" onclick="loadSource()" class="loads btntr">Load Source</button>
-        <button onclick="document.getElementById('from_barcode').value=''" class="clear btntr">Clear Barcode</button>
+        <button onclick="loadSource()" class="btntr">Load Source</button>
+        <button onclick="$('#from_barcode').val('')" class="clear btntr">Clear</button>
     </div>
 
+    {{-- PRODUCT LIST --}}
     <div class="getlisting">
         <table border="1" width="100%" id="productTable">
             <thead>
@@ -44,24 +48,30 @@ $.ajaxSetup({ headers:{ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('conte
                     <th>Product</th>
                     <th>Available</th>
                     <th>Qty</th>
-                    <th>Image</th>
                     <th>-</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
-        <button type="button" onclick="addRow()" class="addpro">➕ Add Product</button>
+        <button type="button" onclick="addRow()">➕ Add Product</button>
     </div>
 
+    {{-- ONE IMAGE PER TRANSFER --}}
+    <div class="transfer-image">
+        <label><strong>Transfer Image</strong></label>
+        <input type="file" id="transfer_image" accept="image/*" capture="environment">
+    </div>
+
+    {{-- TO --}}
     <div class="transferlisting">
         <div id="reader2" style="width:100%; max-width:400px;"></div>
         <button onclick="startScanner('to_barcode')" class="scanto btntr">Scan To</button>
         <input type="text" id="to_barcode" placeholder="Scan TO supplier barcode">
-        <button onclick="document.getElementById('to_barcode').value=''" class="clear btntr">Clear</button>
+        <button onclick="$('#to_barcode').val('')" class="clear btntr">Clear</button>
     </div>
 
     <div class="confirm-transfer">
-        <button type="button" onclick="submitTransfer()">Transfer</button>
+        <button onclick="submitTransfer()">Transfer</button>
     </div>
 </div>
 @endsection
@@ -69,10 +79,9 @@ $.ajaxSetup({ headers:{ 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('conte
 @section('bot')
 <script>
 let fromSupplier = null;
-let toSupplier = null;
 let supplierStocks = [];
 
-// Load products from source supplier
+// Load source supplier & products
 function loadSource() {
     $.get('/transfer/supplier', { barcode: $('#from_barcode').val() }, function(s) {
         fromSupplier = s.id;
@@ -84,112 +93,91 @@ function loadSource() {
     }).fail(() => alert('Source supplier not found'));
 }
 
-// Add product row
+// Add product row (NO IMAGE HERE)
 function addRow() {
     let options = supplierStocks.map(st =>
         `<option value="${st.product_id}" data-qty="${st.qty}">${st.product.name}</option>`
     ).join('');
 
-    let row = `
-    <tr>
-        <td><select class="product_select" onchange="updateAvailable(this)"><option value="">Select product</option>${options}</select></td>
-        <td class="available">-</td>
-        <td><input type="number" class="qty_input" min="1"></td>
-        <td><input type="file" class="image_input" accept="image/*" capture="environment"></td>
-        <td><button type="button" onclick="removeRow(this)">❌</button></td>
-    </tr>`;
-    $('#productTable tbody').append(row);
+    $('#productTable tbody').append(`
+        <tr>
+            <td>
+                <select class="product_select" onchange="updateAvailable(this)">
+                    <option value="">Select product</option>${options}
+                </select>
+            </td>
+            <td class="available">-</td>
+            <td><input type="number" class="qty_input" min="1"></td>
+            <td><button onclick="removeRow(this)">❌</button></td>
+        </tr>
+    `);
 }
 
 function updateAvailable(select) {
-    let available = $('option:selected', select).data('qty') || 0;
+    let qty = $('option:selected', select).data('qty') || 0;
     let row = $(select).closest('tr');
-    row.find('.available').text(available);
-    row.find('.qty_input').off().on('input', function() {
-        if (parseInt(this.value) > available) this.value = available;
+    row.find('.available').text(qty);
+    row.find('.qty_input').on('input', function(){
+        if (this.value > qty) this.value = qty;
     });
 }
 
-function removeRow(btn) { $(btn).closest('tr').remove(); }
-
-// QR Scanner
-function startScanner(targetId) {
-    let html5QrCode = new Html5Qrcode(targetId === 'from_barcode' ? "reader" : "reader2");
-
-    Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-            // Look for the rear camera
-            let rearCamera = cameras.find(cam => /back|rear|environment/i.test(cam.label)) || cameras[0];
-
-            html5QrCode.start(
-                rearCamera.id,
-                { fps: 10, qrbox: 250 },
-                (decodedText) => {
-                    document.getElementById(targetId).value = decodedText;
-                    html5QrCode.stop();
-                }
-            );
-        } else {
-            console.error("No cameras found.");
-        }
-    }).catch(err => console.error(err));
+function removeRow(btn) {
+    $(btn).closest('tr').remove();
 }
 
+// QR Scanner
+function startScanner(target) {
+    let reader = target === 'from_barcode' ? 'reader' : 'reader2';
+    let qr = new Html5Qrcode(reader);
 
-// Submit transfer
+    Html5Qrcode.getCameras().then(cameras => {
+        let cam = cameras.find(c => /rear|back|environment/i.test(c.label)) || cameras[0];
+        qr.start(cam.id, { fps:10, qrbox:250 }, txt => {
+            $('#' + target).val(txt);
+            qr.stop();
+        });
+    });
+}
+
+// SUBMIT (ONE IMAGE)
 function submitTransfer() {
-    if (!fromSupplier || !$('#to_barcode').val()) { alert('Scan both barcodes'); return; }
+    if (!fromSupplier || !$('#to_barcode').val()) {
+        alert('Scan both barcodes');
+        return;
+    }
+
     let products = [];
-    let index = 0;
+    let formData = new FormData();
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+    formData.append('from_supplier_id', fromSupplier);
 
     $('#productTable tbody tr').each(function(){
         let pid = $(this).find('.product_select').val();
         let qty = $(this).find('.qty_input').val();
-
-        if (pid && qty > 0) {
-            products.push({
-                product_id: pid,
-                qty: qty,
-                image_index: index // 🔑 KEY FIX
-            });
-            index++;
-        }
+        if(pid && qty > 0) products.push({ product_id: pid, qty });
     });
 
-    if(products.length===0){ alert('Add products'); return; }
+    if (!products.length) {
+        alert('Add products');
+        return;
+    }
 
     $.get('/transfer/supplier', { barcode: $('#to_barcode').val() }, function(s){
-        toSupplier = s.id;
-        let formData = new FormData();
-        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-        formData.append('from_supplier_id', fromSupplier);
-        formData.append('to_supplier_id', toSupplier);
+        formData.append('to_supplier_id', s.id);
         formData.append('products', JSON.stringify(products));
 
-        let imgIndex = 0;
-
-        $('#productTable tbody tr').each(function(){
-            let pid = $(this).find('.product_select').val();
-            let qty = $(this).find('.qty_input').val();
-
-            if (pid && qty > 0) {
-                let fileInput = $(this).find('.image_input')[0];
-                if (fileInput && fileInput.files[0]) {
-                    formData.append(`images[${imgIndex}]`, fileInput.files[0]);
-                }
-                imgIndex++;
-            }
-        });
-
+        let image = $('#transfer_image')[0].files[0];
+        if (image) formData.append('image', image);
 
         $.ajax({
             url:'/transfer/submit',
             type:'POST',
-            data: formData,
+            data:formData,
             contentType:false,
             processData:false,
-            success: res => { alert(res.message); location.reload(); },
-            error: err => { alert(err.responseJSON?.message || 'Transfer failed'); console.error(err); }
+            success:res => { alert(res.message); location.reload(); },
+            error:err => alert(err.responseJSON?.message || 'Transfer failed')
         });
     }).fail(() => alert('Destination supplier not found'));
 }

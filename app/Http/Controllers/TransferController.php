@@ -61,14 +61,43 @@ class TransferController extends Controller
             'from_supplier_id' => 'required',
             'to_supplier_id'   => 'required|different:from_supplier_id',
             'products'         => 'required|json',
-            'images.*'         => 'nullable|image|max:2048',
+            'image'            => 'nullable|image|max:2048',
         ]);
 
         $products = json_decode($request->products, true);
 
         DB::transaction(function () use ($request, $products) {
 
-            foreach ($products as $index => $item) {
+            // 📸 UPLOAD IMAGE ONCE
+            $outImagePath = null;
+            $inImagePath  = null;
+
+            if ($request->hasFile('image')) {
+                $image    = $request->file('image');
+                $fileName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+                // Product Out image
+                $outDir = public_path('uploads/product_out');
+                if (!file_exists($outDir)) {
+                    mkdir($outDir, 0755, true);
+                }
+                $image->move($outDir, $fileName);
+                $outImagePath = 'uploads/product_out/' . $fileName;
+
+                // Copy same image to product_in
+                $inDir = public_path('uploads/product_in');
+                if (!file_exists($inDir)) {
+                    mkdir($inDir, 0755, true);
+                }
+                copy(
+                    public_path($outImagePath),
+                    public_path('uploads/product_in/' . $fileName)
+                );
+                $inImagePath = 'uploads/product_in/' . $fileName;
+            }
+
+            // 🔁 LOOP PRODUCTS
+            foreach ($products as $item) {
 
                 $fromStock = Stock::where('supplier_id', $request->from_supplier_id)
                     ->where('product_id', $item['product_id'])
@@ -77,34 +106,6 @@ class TransferController extends Controller
 
                 if ($fromStock->qty < $item['qty']) {
                     abort(422, 'Not enough stock for product ID ' . $item['product_id']);
-                }
-
-                // ✅ Default image paths
-                $outImagePath = null;
-                $inImagePath  = null;
-
-                if ($request->hasFile("images.$index")) {
-                    $image     = $request->file("images.$index");
-                    $fileName  = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
-                    // 📂 Product Out image
-                    $outDir = public_path('uploads/product_out');
-                    if (!file_exists($outDir)) {
-                        mkdir($outDir, 0755, true);
-                    }
-                    $image->move($outDir, $fileName);
-                    $outImagePath = 'uploads/product_out/' . $fileName;
-
-                    // 📂 Product In image (copy)
-                    $inDir = public_path('uploads/product_in');
-                    if (!file_exists($inDir)) {
-                        mkdir($inDir, 0755, true);
-                    }
-                    copy(
-                        public_path($outImagePath),
-                        public_path('uploads/product_in/' . $fileName)
-                    );
-                    $inImagePath = 'uploads/product_in/' . $fileName;
                 }
 
                 // 🔻 Product Out
@@ -144,6 +145,7 @@ class TransferController extends Controller
             'message' => 'Transfer completed successfully',
         ]);
     }
+
 
 
 }
