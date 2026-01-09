@@ -95,7 +95,7 @@ function addRow() {
         <td><select class="product_select" onchange="updateAvailable(this)"><option value="">Select product</option>${options}</select></td>
         <td class="available">-</td>
         <td><input type="number" class="qty_input" min="1"></td>
-        <td><input type="file" class="image_input" accept="image/*"></td>
+        <td><input type="file" class="image_input" accept="image/*" capture="environment"></td>
         <td><button type="button" onclick="removeRow(this)">❌</button></td>
     </tr>`;
     $('#productTable tbody').append(row);
