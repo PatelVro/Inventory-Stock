@@ -58,7 +58,7 @@ class FirstlinkingController extends Controller
         // Basic validation
         $request->validate([
             'supplier_barcode' => 'required',
-            'products' => 'required',
+            'products' => 'required|json',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
@@ -69,14 +69,8 @@ class FirstlinkingController extends Controller
             return response()->json(['message' => 'Invalid product data'], 422);
         }
 
-        // Validate each product
         foreach ($products as $item) {
-            if (
-                !isset($item['product_id']) ||
-                !isset($item['qty']) ||
-                !is_numeric($item['qty']) ||
-                $item['qty'] <= 0
-            ) {
+            if (!isset($item['product_id']) || !isset($item['qty']) || !is_numeric($item['qty']) || $item['qty'] <= 0) {
                 return response()->json(['message' => 'Invalid product entry'], 422);
             }
         }
