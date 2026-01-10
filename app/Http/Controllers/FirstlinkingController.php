@@ -59,7 +59,7 @@ class FirstlinkingController extends Controller
         $request->validate([
             'supplier_barcode' => 'required',
             'products' => 'required|json',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+            'image' => 'nullable|file|mimes:jpg,jpeg,png|max:5120'
         ]);
 
         // Decode products JSON
@@ -86,11 +86,23 @@ class FirstlinkingController extends Controller
 
         // Save image once
         $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imageName = time().'_'.$request->image->getClientOriginalName();
-            $request->image->move(public_path('uploads/product_in'), $imageName);
-            $imagePath = 'uploads/product_in/'.$imageName;
+
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+
+            $uploadPath = public_path('uploads/product_in');
+
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
+            }
+
+            $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+
+            $request->file('image')->move($uploadPath, $imageName);
+
+            $imagePath = 'uploads/product_in/' . $imageName;
         }
+
+
 
         // DB transaction
         DB::transaction(function () use ($supplierId, $products, $imagePath) {

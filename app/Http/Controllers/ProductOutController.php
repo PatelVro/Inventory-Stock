@@ -65,7 +65,7 @@ class ProductOutController extends Controller
             'supplier_id' => 'required|integer',
             'qty'         => 'required|integer|min:1',
             'date'        => 'required',
-            'image'       => 'required|image|mimes:jpg,jpeg,png|max:2048' // <- required now
+            'image'       => 'required|file|mimes:jpg,jpeg,png|max:5120' // <- required now
         ]);
 
         // Find stock by product + supplier
@@ -87,9 +87,27 @@ class ProductOutController extends Controller
             ], 422);
         }
 
-        $imageName = time().'_'.str_replace(' ', '_', $request->image->getClientOriginalName());
-        $request->image->move(public_path('uploads'), $imageName);
-        $imagePath = 'uploads/'.$imageName;
+        $imagePath = null;
+
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+
+            $uploadPath = public_path('uploads');
+
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
+            }
+
+            $imageName = time().'_'.str_replace(
+                ' ',
+                '_',
+                $request->file('image')->getClientOriginalName()
+            );
+
+            $request->file('image')->move($uploadPath, $imageName);
+
+            $imagePath = 'uploads/'.$imageName;
+        }
+
 
         $productOut = Product_Out::create([
             'product_id'  => $request->product_id,
@@ -160,9 +178,19 @@ class ProductOutController extends Controller
         $productOut = Product_Out::findOrFail($id);
 
         // Handle image upload
-        $imageName = time().'_'.$request->image->getClientOriginalName();
-        $request->image->move(public_path('uploads'), $imageName);
-        $productOut->image = 'uploads/'.$imageName;
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+
+            $uploadPath = public_path('uploads');
+
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
+            }
+
+            $imageName = time().'_'.$request->file('image')->getClientOriginalName();
+            $request->file('image')->move($uploadPath, $imageName);
+
+            $productOut->image = 'uploads/'.$imageName;
+        }
 
         // Calculate qty difference for stock and product update
         $qtyDifference = $request->qty - $productOut->qty;
