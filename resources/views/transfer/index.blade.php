@@ -69,7 +69,6 @@ button.clear.btntr {
 
 /* ---------- Inputs ---------- */
 input[type="text"],
-input[type="number"],
 select,
 input[type="file"] {
     width: 100%;
@@ -78,6 +77,15 @@ input[type="file"] {
     margin: 6px 0;
     border-radius: 6px;
     border: 1px solid #ccc;
+}
+
+/* ---------- Qty input smaller ---------- */
+.qty_input {
+    width: 80px; /* small fixed width */
+    padding: 6px;
+    font-size: 14px;
+    text-align: center;
+    display: inline-block;
 }
 
 /* ---------- Product Listing ---------- */
@@ -108,8 +116,7 @@ input[type="file"] {
     font-size: 14px;
 }
 
-#productTable select,
-#productTable input {
+#productTable select {
     width: 100%;
 }
 
@@ -178,8 +185,12 @@ input[type="file"] {
     select {
         font-size: 16px; /* Prevent iOS zoom */
     }
+    .qty_input {
+        width: 60px; /* even smaller on tiny phones */
+    }
 }
 </style>
+
 
 
 
