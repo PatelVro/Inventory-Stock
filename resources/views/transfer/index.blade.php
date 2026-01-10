@@ -9,14 +9,180 @@
 <link rel="stylesheet" href="{{ asset('assets/bower_components/bootstrap-daterangepicker/daterangepicker.css') }}">
 
 <style>
-.btntr { margin:5px 0; padding:5px 15px; border:2px solid #4d4d4d; color:#fff; background:#414141; }
-button.scanto.btntr, button.scanf.btntr { background:#3e8eba; border:0; width:100%; }
-button.clear.btntr { background:transparent; color:#125981; border:0; }
-.getlisting { background:#fff; padding:20px 10px; border:1px solid #ddd; margin:10px 0 20px; }
-.confirm-transfer button { background:#01670f; color:#fff; width:100%; padding:10px; font-size:17px; }
-table#productTable th, table#productTable td { padding:5px; }
-.transfer-image { margin:15px 0; }
+/* ---------- Global Reset ---------- */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 100%;
+    padding: 10px;
+}
+
+/* ---------- Headings ---------- */
+h3 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* ---------- Buttons ---------- */
+.btntr {
+    margin: 6px 0;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 2px solid #4d4d4d;
+    color: #fff;
+    background: #414141;
+    font-size: 15px;
+    width: 100%;
+}
+
+button.scanto.btntr,
+button.scanf.btntr {
+    background: #3e8eba;
+    border: none;
+}
+
+button.clear.btntr {
+    background: transparent;
+    color: #125981;
+    border: none;
+    padding: 6px;
+}
+
+/* ---------- Scanner Sections ---------- */
+.startscan,
+.transferlisting {
+    margin-bottom: 20px;
+}
+
+#reader,
+#reader2 {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 auto 10px;
+}
+
+/* ---------- Inputs ---------- */
+input[type="text"],
+input[type="number"],
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    margin: 6px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* ---------- Product Listing ---------- */
+.getlisting {
+    background: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin: 15px 0;
+}
+
+/* ---------- TABLE: Horizontal scroll ONLY ---------- */
+.table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+#productTable {
+    display: block;
+    width: max-content;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+#productTable th,
+#productTable td {
+    padding: 8px;
+    text-align: center;
+    font-size: 14px;
+}
+
+#productTable select,
+#productTable input {
+    width: 100%;
+}
+
+/* ---------- Add Product Button ---------- */
+.getlisting > button {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 6px;
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+}
+
+/* ---------- Transfer Image ---------- */
+.transfer-image {
+    margin: 20px 0;
+}
+
+.transfer-image label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* ---------- Confirm Transfer ---------- */
+.confirm-transfer {
+    margin-top: 20px;
+}
+
+.confirm-transfer button {
+    background: #01670f;
+    color: #fff;
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    border: none;
+    border-radius: 6px;
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width: 768px) {
+    h3 {
+        font-size: 20px;
+    }
+    #productTable th,
+    #productTable td {
+        font-size: 13px;
+        padding: 6px;
+    }
+    #productTable {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ---------- Small Phones ---------- */
+@media (max-width: 480px) {
+    h3 {
+        font-size: 18px;
+    }
+    .btntr {
+        font-size: 16px;
+        padding: 12px;
+    }
+    input,
+    select {
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+}
 </style>
+
+
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -42,19 +208,36 @@ $.ajaxSetup({
 
     {{-- PRODUCT LIST --}}
     <div class="getlisting">
-        <table border="1" width="100%" id="productTable">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Available</th>
-                    <th>Qty</th>
-                    <th>-</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <!-- Scrollable table -->
+        <div class="table-wrapper">
+            <table border="1" width="100%" id="productTable">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Available</th>
+                        <th>Qty</th>
+                        <th>-</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <select class="product_select" onchange="updateAvailable(this)">
+                                <option value="">Select product</option>
+                            </select>
+                        </td>
+                        <td class="available">-</td>
+                        <td><input type="number" class="qty_input" min="1"></td>
+                        <td><button onclick="removeRow(this)">❌</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add Product Button outside scrollable area -->
         <button type="button" onclick="addRow()">➕ Add Product</button>
     </div>
+
 
     {{-- ONE IMAGE PER TRANSFER --}}
     <div class="transfer-image">
