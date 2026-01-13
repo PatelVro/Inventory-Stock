@@ -124,6 +124,7 @@ $.ajaxSetup({
 
 
 let productSelect = null;
+let products = []; 
 
 function initProductSelect() {
     if (productSelect) {
@@ -171,23 +172,43 @@ $('#category_id').on('change', function () {
 });
 
 function addProduct() {
-    let pid = $('#product_id').val();
-    let pname = $('#product_id option:selected').text();
+    if (!productSelect) {
+        alert('Product select not ready');
+        return;
+    }
+
+    let pid = productSelect.getValue();
     let qty = $('#qty').val();
 
-    if(!pid || !qty || qty <= 0) { alert('Select product and enter quantity'); return; }
+    if (!pid || !qty || qty <= 0) {
+        alert('Select product and enter quantity');
+        return;
+    }
 
-    products.push({ product_id: pid, qty: parseInt(qty) });
+    // ✅ Get selected product data from Tom Select
+    let productData = productSelect.options[pid];
+    let pname = productData ? productData.name : '';
+
+    products.push({
+        product_id: pid,
+        qty: parseInt(qty)
+    });
 
     let row = `<tr>
         <td>${pname}</td>
         <td>${qty}</td>
-        <td><button type="button" class="cancel" onclick="removeRow(this, ${pid})">❌</button></td>
+        <td>
+            <button type="button" class="cancel" onclick="removeRow(this, ${pid})">❌</button>
+        </td>
     </tr>`;
+
     $('#productTable tbody').append(row);
 
-    $('#product_id').val(''); $('#qty').val('');
+    // reset
+    productSelect.clear(true);
+    $('#qty').val('');
 }
+
 
 function removeRow(btn, pid) {
     $(btn).closest('tr').remove();
