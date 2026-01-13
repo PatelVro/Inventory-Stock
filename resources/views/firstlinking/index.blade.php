@@ -3,9 +3,14 @@
 @section('title', 'Firstlinking')
 
 @section('top')
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
     .btntr { margin: 5px 0; padding: 6px 10px; background:#3e8eba; color:#fff; border:0; width:100%; }
@@ -60,8 +65,9 @@
 
         <div>
             <label>Step 2: Select Product</label>
+            
             <select id="product_id">
-                <option value="">Select Product</option>
+                <!-- <option value="">Select Product</option> -->
             </select>
         </div>
 
@@ -117,16 +123,50 @@ $.ajaxSetup({
 });
 
 
-let products = [];
+let productSelect = null;
 
-$('#category_id').on('change', function() {
+function initProductSelect() {
+    if (productSelect) {
+        productSelect.destroy();
+    }
+
+    productSelect = new TomSelect('#product_id', {
+        placeholder: 'Search product...',
+        valueField: 'id',
+        labelField: 'name',
+        searchField: 'name',
+        maxItems: 1,        // ✅ THIS enforces single select
+        closeAfterSelect: true,
+        hideSelected: true,
+        options: [],          // IMPORTANT
+        create: false
+    });
+}
+
+$(document).ready(function () {
+    initProductSelect();
+});
+
+$('#category_id').on('change', function () {
     let catId = $(this).val();
-    if(!catId) return;
+    if (!catId) return;
 
-    $.get("{{ route('firstlinking.products') }}", { category_id: catId }, function(data){
-        let html = '<option value="">Select Product</option>';
-        data.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
-        $('#product_id').html(html);
+    if (!productSelect) {
+        console.error('Tom Select not initialized');
+        return;
+    }
+
+    $.get("{{ route('firstlinking.products') }}", { category_id: catId }, function (data) {
+
+        // CLEAR previous products
+        productSelect.clear(true);
+        productSelect.clearOptions();
+
+        // ADD new products
+        productSelect.addOptions(data);
+
+        // REFRESH dropdown
+        productSelect.refreshOptions(false);
     });
 });
 
@@ -213,6 +253,7 @@ function submitFirstlinking() {
         }
     });
 }
+
 
 
 </script>
