@@ -123,7 +123,7 @@
         <!-- small box -->
         <div class="small-box bg-maroon">
             <div class="inner">
-                <h3>{{ \App\Product_In::count() }}</h3>
+                <h3>{{ \App\Product_In::whereHas('product')->count() }}</h3>
 
                 <p>Product In</p>
             </div>
@@ -138,7 +138,7 @@
         <!-- small box -->
         <div class="small-box bg-gray">
             <div class="inner">
-                <h3>{{ \App\Product_Out::count()  }}</h3>
+                <h3>{{ \App\Product_Out::whereHas('product')->count() }}</h3>
 
                 <p>Product Out</p>
             </div>

@@ -21,7 +21,7 @@ class ProductOutController extends Controller
     
     public function __construct()
     {
-        $this->middleware('role:admin');
+        $this->middleware('role:admin,technician');
     }
     /**
      * Display a listing of the resource.
@@ -268,7 +268,7 @@ class ProductOutController extends Controller
 
     public function apiProductsOut()
 {
-    $productsOut = Product_Out::with(['product', 'supplier'])->get();
+    $productsOut = Product_Out::whereHas('product')->with(['product', 'supplier'])->get();
 
     return DataTables::of($productsOut)
         ->addColumn('products_name', function ($row) {
@@ -299,7 +299,7 @@ class ProductOutController extends Controller
 
     public function exportProductOutAll()
     {
-        $Product_Out = Product_Out::all();
+        $Product_Out = Product_Out::whereHas('product')->get();
         $pdf = PDF::loadView('product_out.productOutAllPDF',compact('Product_Out'));
         return $pdf->download('product_out.pdf');
     }
@@ -307,7 +307,7 @@ class ProductOutController extends Controller
     public function exportProductOut(Request $request)
     {
         $idst = explode(",",$request->exportpdf);
-        $Product_Out = Product_Out::find($idst);
+        $Product_Out = Product_Out::whereHas('product')->find($idst);
         $companyInfo = Company::find(1);
 
         $pdf = PDF::setOptions([

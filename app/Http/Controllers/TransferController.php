@@ -14,7 +14,7 @@ class TransferController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:staff,admin');
+        $this->middleware('role:staff,admin,technician');
     }
 
     // Show transfer page
@@ -47,6 +47,7 @@ class TransferController extends Controller
     public function getSupplierProducts(Request $request)
     {
         $stocks = Stock::with('product')
+            ->whereHas('product')
             ->where('supplier_id', $request->supplier_id)
             ->where('qty', '>', 0)
             ->get();

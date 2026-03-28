@@ -46,6 +46,7 @@
                             <select id="role" name="role" class="form-control">
                                 <option value="admin">Admin</option>
                                 <option value="staff">Staff</option>
+                                <option value="technician">Technician</option>
                             </select>
                             <span class="help-block with-errors"></span>
                         </div>

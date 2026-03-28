@@ -18,7 +18,7 @@ class ExportProductIn implements FromView
     {
         // TODO: Implement view() method.
         return view('product_in.productInAllExcel',[
-            'Product_In' => Product_In::all()
+            'Product_In' => Product_In::whereHas('product')->get()
         ]);
     }
 }

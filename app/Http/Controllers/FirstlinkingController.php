@@ -14,7 +14,7 @@ class FirstlinkingController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:staff,admin');
+        $this->middleware('role:staff,admin,technician');
     }
     public function index()
     {

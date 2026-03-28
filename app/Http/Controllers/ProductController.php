@@ -12,7 +12,7 @@ class ProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:admin');
+        $this->middleware('role:admin,technician');
     }
     /**
      * Display a listing of the resource.
@@ -60,6 +60,11 @@ class ProductController extends Controller
         }
 
         $input['barcode_id'] = $barcode->id;
+
+        if (auth()->user()->isTechnician()) {
+            $input['user_id'] = auth()->id();
+        }
+
         Product::create($input);
 
         return response()->json([

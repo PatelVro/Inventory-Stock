@@ -32,12 +32,16 @@
             <li class="header">HEADER</li>
             <!-- Optionally, you can add icons to the links -->
             <li class=""><a href="{{ url('/home') }}"><i class="fa fa-tachometer"></i> <span>Dashboard</span></a></li>
-            @if (Auth::user()->role == "admin" )
-                <li class=""><a href="{{ route('categories.index') }}"><i class="fa fa-folder-o"></i> <span>Category</span></a></li>
+            @if (Auth::user()->role == "admin" || Auth::user()->role == "technician")
+                @if (Auth::user()->role == "admin")
+                    <li class=""><a href="{{ route('categories.index') }}"><i class="fa fa-folder-o"></i> <span>Category</span></a></li>
+                @endif
                 <li class=""><a href="{{ route('products.index') }}"><i class="fa fa-product-hunt"></i> <span>Product</span></a></li>
                 <li class=""><a href="{{ route('productsIn.index') }}"><i class="fa fa-sign-in"></i> <span>Product In</span></a></li>
                 <li class=""><a href="{{ route('productsOut.index') }}"><i class="fa fa-sign-out"></i> <span>Product Out</span></a></li>
                 <li class=""><a href="{{ route('stock.index') }}"><i class="fa fa-sign-out"></i> <span>Stock</span></a></li>
+            @endif
+            @if (Auth::user()->role == "admin")
                 <!-- <li class=""><a href="{{ route('customers.index') }}"><i class="fa fa-user"></i> <span>Customer</span></a></li> -->
                 <li class=""><a href="{{ route('sales.index') }}"><i class="fa fa-users"></i> <span>Sales</span></a></li>
                 <li class=""><a href="{{ route('suppliers.index') }}"><i class="fa fa-building-o"></i> <span>Location</span></a></li>

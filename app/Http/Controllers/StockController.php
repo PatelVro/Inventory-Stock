@@ -11,13 +11,15 @@ class StockController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Stock::with(['product','supplier']);
+        $query = Stock::with(['product','supplier'])->whereHas('product');
 
         if ($request->search) {
-            $query->whereHas('product', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
-            })->orWhereHas('supplier', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('product', function ($q2) use ($request) {
+                    $q2->where('name', 'like', '%' . $request->search . '%');
+                })->orWhereHas('supplier', function ($q2) use ($request) {
+                    $q2->where('name', 'like', '%' . $request->search . '%');
+                });
             });
         }
 

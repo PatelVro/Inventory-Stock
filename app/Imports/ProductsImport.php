@@ -14,12 +14,18 @@ class ProductsImport implements ToModel, WithHeadingRow
         // Create or find barcode
         $barcode = Barcode::firstOrCreate(['name' => $row['barcode']]);
 
-        return new Product([
+        $data = [
             'name'        => $row['name'],
             'barcode_id'  => $barcode->id,
             'price'       => $row['price'],
             'qty'         => $row['qty'],
             'category_id' => $row['category_id'],
-        ]);
+        ];
+
+        if (auth()->check() && auth()->user()->isTechnician()) {
+            $data['user_id'] = auth()->id();
+        }
+
+        return new Product($data);
     }
 }

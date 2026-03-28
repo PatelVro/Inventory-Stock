@@ -20,7 +20,7 @@ class ProductInController extends Controller
     
     public function __construct()
     {
-        $this->middleware('role:admin');
+        $this->middleware('role:admin,technician');
     }
     /**
      * Display a listing of the resource.
@@ -208,8 +208,8 @@ class ProductInController extends Controller
 
 
 
-    public function apiProductsIn(){ 
-        $product = Product_In::all(); 
+    public function apiProductsIn(){
+        $product = Product_In::whereHas('product')->get();
         return Datatables::of($product) 
         ->addColumn('products_name', function ($product){ return $product->product->name; }) 
         ->addColumn('supplier_name', function ($product){ return $product->supplier->name; }) 
@@ -229,7 +229,7 @@ class ProductInController extends Controller
 
     public function exportProductInAll()
     {
-        $Product_In = Product_In::all();
+        $Product_In = Product_In::whereHas('product')->get();
         $pdf = PDF::loadView('product_in.productInAllPDF',compact('Product_In'));
         return $pdf->download('product_in.pdf');
     }
